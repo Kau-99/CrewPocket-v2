@@ -1,5 +1,7 @@
-import { PagePlaceholder } from "@/components/shared/page-placeholder";
+import { ClientsList } from "@/features/clients/components/clients-list";
+
+export const metadata = { title: "Clients" };
 
 export default function ClientsPage() {
-  return <PagePlaceholder title="Clients" phase={2} />;
+  return <ClientsList />;
 }

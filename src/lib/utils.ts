@@ -21,6 +21,22 @@ export function formatCents(cents: number): string {
   return usdFormatter.format(cents / 100);
 }
 
+/**
+ * Borda de input: "1,234.56" → 123456 centavos (inteiro) ou null se inválido.
+ * Único ponto onde dólares digitados viram centavos.
+ */
+export function dollarsToCents(input: string): number | null {
+  const normalized = input.replace(/[$,\s]/g, "");
+  if (normalized === "") return 0;
+  if (!/^\d+(\.\d{0,2})?$/.test(normalized)) return null;
+  return Math.round(Number(normalized) * 100);
+}
+
+/** Centavos → string editável ("1234.56"), sem símbolo. */
+export function centsToDollarsString(cents: number): string {
+  return (cents / 100).toFixed(2);
+}
+
 /** Exhaustiveness check para switches sobre unions (ex.: máquina de estados do Job). */
 export function assertNever(value: never): never {
   throw new Error(`Unexpected value: ${JSON.stringify(value)}`);

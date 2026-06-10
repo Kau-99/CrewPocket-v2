@@ -1,6 +1,26 @@
 import { describe, expect, it } from "vitest";
 
-import { assertNever, cn, formatCents } from "@/lib/utils";
+import { assertNever, centsToDollarsString, cn, dollarsToCents, formatCents } from "@/lib/utils";
+
+describe("dollarsToCents / centsToDollarsString", () => {
+  it("converts typed dollars to integer cents", () => {
+    expect(dollarsToCents("1,234.56")).toBe(123_456);
+    expect(dollarsToCents("$45")).toBe(4_500);
+    expect(dollarsToCents("0.1")).toBe(10);
+    expect(dollarsToCents("")).toBe(0);
+  });
+
+  it("rejects malformed input", () => {
+    expect(dollarsToCents("abc")).toBeNull();
+    expect(dollarsToCents("1.234")).toBeNull();
+    expect(dollarsToCents("-5")).toBeNull();
+  });
+
+  it("round-trips cents to editable string", () => {
+    expect(centsToDollarsString(123_456)).toBe("1234.56");
+    expect(dollarsToCents(centsToDollarsString(99))).toBe(99);
+  });
+});
 
 describe("formatCents", () => {
   it("formats integer cents as USD", () => {

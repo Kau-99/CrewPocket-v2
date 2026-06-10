@@ -1,13 +1,161 @@
 rules_version = '2';
 
-// Fase 1: apenas settings/{uid} liberado (owner-only + validação básica).
-// A matriz completa por coleção, espelhando os Zod schemas, entra na
-// Fase 2 junto com os testes em @firebase/rules-unit-testing.
+// SPEC §6.3 — owner-only em tudo, imutáveis em update, validações
+// espelhando os Zod schemas (enums, limites de string, ranges numéricos),
+// subscriptions write-false, fallback deny. Testado em tests/rules/.
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
     function isOwner(uid) {
-      return request.auth != null && request.auth.uid == uid;
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    function ownsExisting() {
+      return isSignedIn() && resource.data.ownerId == request.auth.uid;
+    }
+
+    function ownsIncoming() {
+      return isSignedIn() && request.resource.data.ownerId == request.auth.uid;
+    }
+
+    // ownerId e createdAt nunca mudam em update (SPEC §6.3)
+    function immutableBase() {
+      return request.resource.data.ownerId == resource.data.ownerId
+        && request.resource.data.createdAt == resource.data.createdAt;
+    }
+
+    function validBase() {
+      let d = request.resource.data;
+      return d.schemaVersion == 2
+        && d.id is string
+        && d.createdAt is timestamp
+        && d.updatedAt is timestamp;
+    }
+
+    function validClient() {
+      let d = request.resource.data;
+      return d.name is string && d.name.size() >= 1 && d.name.size() <= 120
+        && d.email is string && d.email.size() <= 120
+        && d.phone is string && d.phone.size() <= 30
+        && d.address is string && d.address.size() <= 300
+        && d.city is string && d.city.size() <= 100
+        && d.state is string && d.state.size() <= 2
+        && d.zip is string && d.zip.size() <= 10
+        && d.notes is string && d.notes.size() <= 2000
+        && d.isArchived is bool;
+    }
+
+    function validJob() {
+      let d = request.resource.data;
+      return d.name is string && d.name.size() >= 1 && d.name.size() <= 200
+        && (d.clientId == null || d.clientId is string)
+        && d.clientName is string && d.clientName.size() <= 120
+        && d.status in ['lead', 'quoted', 'draft', 'active', 'completed', 'invoiced']
+        && d.priority in ['low', 'normal', 'high']
+        && d.paymentStatus in ['unpaid', 'partial', 'paid']
+        && d.date is timestamp
+        && (d.deadline == null || d.deadline is timestamp)
+        && d.address is string && d.address.size() <= 300
+        && d.zip is string && d.zip.size() <= 10
+        && d.description is string && d.description.size() <= 2000
+        && d.notes is string && d.notes.size() <= 2000
+        && d.tags is list && d.tags.size() <= 20
+        && d.costs is list && d.costs.size() <= 100
+        && d.valueCents is int && d.valueCents >= 0 && d.valueCents <= 1000000000
+        && d.depositCents is int && d.depositCents >= 0
+        && d.paidCents is int && d.paidCents >= 0
+        && (d.paidAt == null || d.paidAt is timestamp)
+        && d.photoUrls is list && d.photoUrls.size() <= 30
+        && (d.estimateId == null || d.estimateId is string)
+        && (d.invoiceId == null || d.invoiceId is string);
+    }
+
+    function validEstimate() {
+      let d = request.resource.data;
+      return d.number is string && d.number.size() <= 20
+        && (d.clientId == null || d.clientId is string)
+        && d.clientName is string && d.clientName.size() <= 120
+        && d.title is string && d.title.size() >= 1 && d.title.size() <= 200
+        && d.status in ['draft', 'sent', 'accepted', 'declined', 'expired']
+        && d.lineItems is list && d.lineItems.size() >= 1 && d.lineItems.size() <= 100
+        && d.discountPct is number && d.discountPct >= 0 && d.discountPct <= 100
+        && d.taxPct is number && d.taxPct >= 0 && d.taxPct <= 30
+        && d.notes is string && d.notes.size() <= 5000
+        && d.validUntil is timestamp;
+    }
+
+    function validInvoice() {
+      let d = request.resource.data;
+      return d.number is string && d.number.size() <= 20
+        && d.jobId is string
+        && (d.clientId == null || d.clientId is string)
+        && d.clientName is string && d.clientName.size() <= 120
+        && d.lineItems is list && d.lineItems.size() >= 1
+        && d.discountPct is number && d.discountPct >= 0 && d.discountPct <= 100
+        && d.taxPct is number && d.taxPct >= 0 && d.taxPct <= 30
+        && d.status in ['draft', 'sent', 'paid', 'overdue', 'void']
+        && d.dueDate is timestamp
+        && (d.paidAt == null || d.paidAt is timestamp)
+        && d.paidCents is int && d.paidCents >= 0;
+    }
+
+    function validCrewMember() {
+      let d = request.resource.data;
+      return d.name is string && d.name.size() >= 1 && d.name.size() <= 120
+        && d.role is string && d.role.size() <= 80
+        && d.phone is string && d.phone.size() <= 30
+        && d.email is string && d.email.size() <= 120
+        && d.hourlyRateCents is int && d.hourlyRateCents >= 0 && d.hourlyRateCents <= 100000
+        && d.certifications is string && d.certifications.size() <= 500
+        && d.status in ['active', 'inactive'];
+    }
+
+    // hours ≤ 24 e clockOut > clockIn (SPEC §4.5/§6.3)
+    function validTimeLog() {
+      let d = request.resource.data;
+      return d.jobId is string
+        && (d.crewMemberId == null || d.crewMemberId is string)
+        && d.crewName is string && d.crewName.size() <= 120
+        && d.clockIn is timestamp
+        && (d.clockOut == null
+            || (d.clockOut is timestamp
+                && d.clockOut.toMillis() > d.clockIn.toMillis()
+                && d.clockOut.toMillis() - d.clockIn.toMillis() <= 86400000))
+        && d.breakMinutes is int && d.breakMinutes >= 0 && d.breakMinutes <= 480
+        && d.note is string && d.note.size() <= 500;
+    }
+
+    function validMileageLog() {
+      let d = request.resource.data;
+      return (d.jobId == null || d.jobId is string)
+        && d.date is timestamp
+        && d.miles is number && d.miles >= 0 && d.miles <= 1000
+        && d.purpose is string && d.purpose.size() <= 200;
+    }
+
+    function validInventoryItem() {
+      let d = request.resource.data;
+      return d.name is string && d.name.size() >= 1 && d.name.size() <= 120
+        && d.category is string && d.category.size() <= 60
+        && d.quantity is number && d.quantity >= 0 && d.quantity <= 1000000
+        && d.unit is string && d.unit.size() <= 20
+        && d.unitCostCents is int && d.unitCostCents >= 0
+        && d.supplier is string && d.supplier.size() <= 120
+        && d.minStock is number && d.minStock >= 0;
+    }
+
+    function validPricebookItem() {
+      let d = request.resource.data;
+      return d.name is string && d.name.size() >= 1 && d.name.size() <= 120
+        && d.category is string && d.category.size() <= 60
+        && d.unit is string && d.unit.size() <= 20
+        && d.unitPriceCents is int && d.unitPriceCents >= 0
+        && d.unitCostCents is int && d.unitCostCents >= 0
+        && d.description is string && d.description.size() <= 500;
     }
 
     function validSettings() {
@@ -34,8 +182,73 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    // subscriptions/customers/processedEvents: somente Admin SDK (SPEC §6.3).
-    // Leitura de subscriptions/{uid} pelo dono é liberada na Fase 5.
+    // Escrita SOMENTE pelo Admin SDK (webhook Stripe) — SPEC §6.3
+    match /subscriptions/{uid} {
+      allow read: if isOwner(uid);
+      allow write: if false;
+    }
+
+    match /customers/{uid} {
+      allow read, write: if false;
+    }
+
+    match /processedEvents/{eventId} {
+      allow read, write: if false;
+    }
+
+    match /clients/{docId} {
+      allow read, delete: if ownsExisting();
+      allow create: if ownsIncoming() && validBase() && validClient();
+      allow update: if ownsExisting() && immutableBase() && validBase() && validClient();
+    }
+
+    match /jobs/{docId} {
+      allow read, delete: if ownsExisting();
+      allow create: if ownsIncoming() && validBase() && validJob();
+      allow update: if ownsExisting() && immutableBase() && validBase() && validJob();
+    }
+
+    match /estimates/{docId} {
+      allow read, delete: if ownsExisting();
+      allow create: if ownsIncoming() && validBase() && validEstimate();
+      allow update: if ownsExisting() && immutableBase() && validBase() && validEstimate();
+    }
+
+    match /invoices/{docId} {
+      allow read, delete: if ownsExisting();
+      allow create: if ownsIncoming() && validBase() && validInvoice();
+      allow update: if ownsExisting() && immutableBase() && validBase() && validInvoice();
+    }
+
+    match /crewMembers/{docId} {
+      allow read, delete: if ownsExisting();
+      allow create: if ownsIncoming() && validBase() && validCrewMember();
+      allow update: if ownsExisting() && immutableBase() && validBase() && validCrewMember();
+    }
+
+    match /timeLogs/{docId} {
+      allow read, delete: if ownsExisting();
+      allow create: if ownsIncoming() && validBase() && validTimeLog();
+      allow update: if ownsExisting() && immutableBase() && validBase() && validTimeLog();
+    }
+
+    match /mileageLogs/{docId} {
+      allow read, delete: if ownsExisting();
+      allow create: if ownsIncoming() && validBase() && validMileageLog();
+      allow update: if ownsExisting() && immutableBase() && validBase() && validMileageLog();
+    }
+
+    match /inventoryItems/{docId} {
+      allow read, delete: if ownsExisting();
+      allow create: if ownsIncoming() && validBase() && validInventoryItem();
+      allow update: if ownsExisting() && immutableBase() && validBase() && validInventoryItem();
+    }
+
+    match /pricebookItems/{docId} {
+      allow read, delete: if ownsExisting();
+      allow create: if ownsIncoming() && validBase() && validPricebookItem();
+      allow update: if ownsExisting() && immutableBase() && validBase() && validPricebookItem();
+    }
 
     match /{document=**} {
       allow read, write: if false;

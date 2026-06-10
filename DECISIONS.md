@@ -73,3 +73,24 @@ Consequência: paywall/dados protegidos server-side pelas rules; o guard é UX. 
 Contexto: o dev server do Next exige `unsafe-eval`/inline para HMR e react-refresh, incompatível com a CSP da SPEC §6.5.
 Decisão: `src/middleware.ts` aplica a CSP completa (nonce + strict-dynamic, sem unsafe-inline para scripts) somente quando `NODE_ENV=production`; dev fica sem CSP.
 Consequência: o smoke E2E valida os headers estáticos; a CSP em si deve ser verificada no build de produção (Fase 7 / Lighthouse).
+
+## ADR-011 — Busca e filtros client-side sobre as páginas carregadas
+
+**Data:** 2026-06-10 · **Fase:** 2
+Contexto: Firestore não tem full-text search; a SPEC pede busca com debounce + paginação por cursor (25/página).
+Decisão: paginação por cursor no servidor (`startAfter`, índice ownerId+createdAt) e busca/filtros aplicados client-side sobre as páginas já carregadas — adequado à persona (1–5 pessoas, centenas de docs).
+Consequência: busca não varre docs não carregados; se virar problema real, considerar prefix-query em `name` ou índice externo (v3).
+
+## ADR-012 — Command palette (⌘K) e atalho "n" adiados para a fase de polish
+
+**Data:** 2026-06-10 · **Fase:** 2
+Contexto: os "padrões globais" da SPEC §8 incluem ⌘K e `n`; nenhuma fase os atribui explicitamente.
+Decisão: implementar junto do Dashboard/notificações (Fase 6) ou polish (Fase 7), quando todas as rotas/ações navegáveis existirem.
+Consequência: item rastreado aqui para a auditoria final da §10 não esquecer.
+
+## ADR-013 — Fórmulas cross-domain usam tipagem estrutural, não imports de features
+
+**Data:** 2026-06-10 · **Fase:** 2
+Contexto: `jobLaborCostCents(job, timeLogs, crew)` (SPEC §5) precisa de TimeLog/CrewMember, mas features são ilhas (§3.2.1) — jobs não pode importar schemas de time-tracking/crew.
+Decisão: a função vive em `features/jobs/utils.ts` com interfaces estruturais locais (`LaborLog`, `RatedMember`); o mesmo vale para o lineItemSchema duplicado em invoices (contrato de dados, não código).
+Consequência: zero acoplamento entre features; o TypeScript valida a compatibilidade estrutural na composição (páginas).

@@ -1,5 +1,7 @@
-import { PagePlaceholder } from "@/components/shared/page-placeholder";
+import { JobBoard } from "@/features/jobs/components/job-board";
+
+export const metadata = { title: "Jobs board" };
 
 export default function JobsBoardPage() {
-  return <PagePlaceholder title="Jobs board" phase={2} />;
+  return <JobBoard />;
 }
