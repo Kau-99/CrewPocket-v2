@@ -1,0 +1,12 @@
+node_modules/
+.next/
+out/
+coverage/
+playwright-report/
+test-results/
+pnpm-lock.yaml
+public/sw.js
+.firebase/
+emulator-data/
+.husky/
+next-env.d.ts

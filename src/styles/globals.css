@@ -1,0 +1,71 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 220 35% 7%;
+    --card: 0 0% 100%;
+    --card-foreground: 220 35% 7%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 35% 7%;
+    --primary: 210 100% 50%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 220 15% 94%;
+    --secondary-foreground: 220 35% 12%;
+    --muted: 220 15% 94%;
+    --muted-foreground: 220 10% 40%;
+    --accent: 220 15% 94%;
+    --accent-foreground: 220 35% 12%;
+    --destructive: 0 75% 50%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 13% 88%;
+    --input: 220 13% 88%;
+    --ring: 210 100% 50%;
+    --radius: 0.5rem;
+  }
+
+  /* Dark é o tema default do produto (SPEC §8: fundo #0b0f17, primary #3b9eff) */
+  .dark {
+    --background: 220 35% 7%;
+    --foreground: 210 30% 96%;
+    --card: 220 30% 10%;
+    --card-foreground: 210 30% 96%;
+    --popover: 220 30% 9%;
+    --popover-foreground: 210 30% 96%;
+    --primary: 210 100% 62%;
+    --primary-foreground: 220 35% 7%;
+    --secondary: 220 25% 15%;
+    --secondary-foreground: 210 30% 96%;
+    --muted: 220 25% 15%;
+    --muted-foreground: 215 15% 65%;
+    --accent: 220 25% 17%;
+    --accent-foreground: 210 30% 96%;
+    --destructive: 0 70% 55%;
+    --destructive-foreground: 210 30% 96%;
+    --border: 220 25% 18%;
+    --input: 220 25% 18%;
+    --ring: 210 100% 62%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
