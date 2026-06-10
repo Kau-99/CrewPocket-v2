@@ -1,5 +1,7 @@
-import { PagePlaceholder } from "@/components/shared/page-placeholder";
+import { SignupForm } from "@/features/auth/components/signup-form";
+
+export const metadata = { title: "Sign up" };
 
 export default function SignupPage() {
-  return <PagePlaceholder title="Sign up" phase={1} />;
+  return <SignupForm />;
 }

@@ -4,6 +4,8 @@ import type { ReactNode } from "react";
 import "@/env";
 import "@/styles/globals.css";
 
+import { Providers } from "@/components/shared/providers";
+
 export const metadata: Metadata = {
   title: {
     default: "CrewPocket",
@@ -20,11 +22,13 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
-// Dark é o default do produto; next-themes assume o controle na Fase 1.
+// Tema controlado pelo next-themes (attribute="class", default dark — SPEC §8)
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className="dark" suppressHydrationWarning>
-      <body className="min-h-dvh">{children}</body>
+    <html lang="en" suppressHydrationWarning>
+      <body className="min-h-dvh">
+        <Providers>{children}</Providers>
+      </body>
     </html>
   );
 }

@@ -1,5 +1,14 @@
-import { PagePlaceholder } from "@/components/shared/page-placeholder";
+import { Suspense } from "react";
 
+import { LoginForm } from "@/features/auth/components/login-form";
+
+export const metadata = { title: "Log in" };
+
+// Suspense exigido pelo useSearchParams (returnTo) no App Router
 export default function LoginPage() {
-  return <PagePlaceholder title="Log in" phase={1} />;
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
+  );
 }

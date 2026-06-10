@@ -52,3 +52,24 @@ Consequência: violação de fronteira quebra o lint; manutenção é uma linha 
 Contexto: não há regra ESLint confiável para detectar semanticamente "segredo" num nome de env var.
 Decisão: todo acesso a env passa por `src/env.ts` (@t3-oss/env-nextjs), que separa `server` de `client` e falha o build se uma var server for usada no client. `.env.example` documenta a fronteira.
 Consequência: a garantia é estrutural (build quebra), mais forte que lint.
+
+## ADR-008 — App Check desligado quando rodando contra emulators
+
+**Data:** 2026-06-10 · **Fase:** 1
+Contexto: o Firebase Emulator Suite não tem backend de App Check; inicializar ReCaptchaV3Provider com chave demo quebraria o dev local.
+Decisão: `lib/firebase/client.ts` só inicializa App Check quando `NEXT_PUBLIC_USE_EMULATORS=false`; em produção real é obrigatório, com debug token via env apenas em dev contra projeto real.
+Consequência: dev local sem fricção; checklist da Fase 7 deve validar App Check enforcement no projeto real.
+
+## ADR-009 — Route guard client-side (sem session cookies)
+
+**Data:** 2026-06-10 · **Fase:** 1
+Contexto: a sessão vive no Firebase Auth client SDK (IndexedDB); o middleware Edge não consegue validar o token sem Admin SDK/session cookies — que a SPEC não pede.
+Decisão: guard no layout do grupo `(app)` via `useAuth` com redirect `/login?returnTo=…` (sanitizado contra open redirect); a garantia real de dados é das Firestore Rules, não do guard.
+Consequência: paywall/dados protegidos server-side pelas rules; o guard é UX. Compatível com offline-first (sessão local funciona sem rede).
+
+## ADR-010 — CSP com nonce ativa apenas em produção
+
+**Data:** 2026-06-10 · **Fase:** 1
+Contexto: o dev server do Next exige `unsafe-eval`/inline para HMR e react-refresh, incompatível com a CSP da SPEC §6.5.
+Decisão: `src/middleware.ts` aplica a CSP completa (nonce + strict-dynamic, sem unsafe-inline para scripts) somente quando `NODE_ENV=production`; dev fica sem CSP.
+Consequência: o smoke E2E valida os headers estáticos; a CSP em si deve ser verificada no build de produção (Fase 7 / Lighthouse).
