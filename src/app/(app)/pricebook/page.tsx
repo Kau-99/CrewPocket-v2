@@ -1,5 +1,7 @@
-import { PagePlaceholder } from "@/components/shared/page-placeholder";
+import { PricebookList } from "@/features/pricebook/components/pricebook-list";
+
+export const metadata = { title: "Pricebook" };
 
 export default function PricebookPage() {
-  return <PagePlaceholder title="Pricebook" phase={4} />;
+  return <PricebookList />;
 }

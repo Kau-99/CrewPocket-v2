@@ -122,3 +122,24 @@ Consequência: rejeição de rules não vira toast (só log) — aceitável porq
 Contexto: o OneDrive desidrata arquivos recém-criados do `.next` (EINVAL readlink — node_modules escapa por exclusão automática do OneDrive); e `emulators:start` morre com stdin fechado (NPE no rules runtime) sob qualquer process manager.
 Decisão: `.next` → junction para `%LOCALAPPDATA%\crewpocket-next-cache`; webServer do Playwright usa `firebase emulators:exec` + `scripts/emulators-keepalive.cjs`.
 Consequência: dev/build estáveis nesta máquina; quem clonar o repo fora do OneDrive não precisa da junction (documentado no README).
+
+## ADR-018 — Criação numerada (estimates/invoices) exige conexão
+
+**Data:** 2026-06-11 · **Fase:** 4
+Contexto: SPEC §5 exige contadores transacionais em settings; transações do Firestore não funcionam offline — conflita com o offline-first (ADR-016).
+Decisão: `nextDocumentNumber`/conversões usam `runTransaction` e falham offline com a mensagem i18n "offline"; edição, status e deleção desses docs seguem offline-first via commitWrite.
+Consequência: números nunca duplicam; criar estimate/invoice no campo sem sinal não é suportado (caso raro — documento comercial se emite do escritório).
+
+## ADR-019 — Job → Invoice fatura o valor do job em 1 line item
+
+**Data:** 2026-06-11 · **Fase:** 4
+Contexto: SPEC §5 diz "lineItems do job", ambíguo — copiar costs cobraria o cliente pelo CUSTO (perderia a margem).
+Decisão: a invoice nasce com 1 line item {description: nome do job, qty 1, unitPrice: valueCents}; paidCents inicial = paidCents + depositCents do job; dueDate = +30 dias; só jobs `completed` sem invoiceId convertem.
+Consequência: o cliente é cobrado pelo preço acordado. Mark Paid não retro-atualiza job.paymentStatus — rastreado para a Fase 6 (dashboard de unpaid usa invoices).
+
+## ADR-020 — PDF via blob em nova aba, sem PDFViewer embutido
+
+**Data:** 2026-06-11 · **Fase:** 4
+Contexto: @react-pdf/renderer pesa ~500KB; PDFViewer embutido inflaria o First Load JS de todas as rotas comerciais (orçamento §10: <180KB na inicial).
+Decisão: import dinâmico só no clique — preview = blob em nova aba; download = anchor com blob. Rota inicial segue em ~88KB.
+Consequência: "preview do PDF" da §8 é atendido com o PDF real (não um mock HTML); sem custo de bundle para quem não usa.

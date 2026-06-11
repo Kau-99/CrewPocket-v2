@@ -1,5 +1,7 @@
-import { PagePlaceholder } from "@/components/shared/page-placeholder";
+import { InvoicesList } from "@/features/invoices/components/invoices-list";
+
+export const metadata = { title: "Invoices" };
 
 export default function InvoicesPage() {
-  return <PagePlaceholder title="Invoices" phase={4} />;
+  return <InvoicesList />;
 }

@@ -42,6 +42,8 @@ interface JobDetailProps {
   laborCostCents: number;
   /** Conteúdo da tab Time, injetado via slot pela página (ADR-015). */
   timeTab: ReactNode;
+  /** Ações extras (ex.: Create invoice, View estimate) — slot da página. */
+  extraActions?: ReactNode;
 }
 
 function SummaryCard({
@@ -94,6 +96,7 @@ export function JobDetail({
   minMarginPct,
   laborCostCents,
   timeTab,
+  extraActions,
 }: JobDetailProps) {
   const dict = useTranslation();
   const router = useRouter();
@@ -143,6 +146,7 @@ export function JobDetail({
             {[job.clientName, job.address].filter(Boolean).join(" · ")}
           </p>
         </div>
+        {extraActions}
         <Button
           variant="outline"
           size="sm"
