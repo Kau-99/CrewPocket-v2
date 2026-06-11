@@ -143,3 +143,17 @@ Consequência: o cliente é cobrado pelo preço acordado. Mark Paid não retro-a
 Contexto: @react-pdf/renderer pesa ~500KB; PDFViewer embutido inflaria o First Load JS de todas as rotas comerciais (orçamento §10: <180KB na inicial).
 Decisão: import dinâmico só no clique — preview = blob em nova aba; download = anchor com blob. Rota inicial segue em ~88KB.
 Consequência: "preview do PDF" da §8 é atendido com o PDF real (não um mock HTML); sem custo de bundle para quem não usa.
+
+## ADR-021 — Paywall global cobre todas as rotas do app, inclusive /billing
+
+**Data:** 2026-06-11 · **Fase:** 5
+Contexto: SPEC §6.2 — sem status ∈ {active, trialing} o app inteiro mostra o paywall; mas o usuário precisa de um caminho para assinar.
+Decisão: o paywall (renderizado no layout do grupo `(app)`) É a tela de assinatura: contém o comparativo Solo×Pro com checkout e sign out. Preços não são exibidos na UI (vivem no Stripe) — aparecem no Checkout.
+Consequência: zero rota "vazada"; o doc `subscriptions` que só o webhook escreve é a única chave do app. uid amarrado via `client_reference_id` + `subscription_data.metadata.uid` (fallback por `customers/`).
+
+## ADR-022 — E2E simula o webhook concedendo trial via REST dos emulators
+
+**Data:** 2026-06-11 · **Fase:** 5
+Contexto: o paywall bloquearia todos os fluxos e2e; rodar Stripe real no Playwright local é frágil (o teste §10-e2e-5 com `stripe listen` fica para a Fase 7 com chaves reais).
+Decisão: após o onboarding, o teste asserta o paywall e então grava `subscriptions/{uid}` via Firestore REST com `Bearer owner` (equivalente exato do Admin SDK do webhook); o app desbloqueia via onSnapshot.
+Consequência: o e2e cobre o paywall e o desbloqueio em tempo real; a lógica do webhook em si tem 10 testes próprios contra o emulator (assinatura, 4 eventos, idempotência).

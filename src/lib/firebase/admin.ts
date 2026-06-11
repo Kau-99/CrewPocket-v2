@@ -37,3 +37,17 @@ export function getAdminAuth(): Auth {
 export function getAdminDb(): Firestore {
   return getFirestore(getAdminApp());
 }
+
+/** `Authorization: Bearer <Firebase ID token>` → uid (SPEC §6.1). */
+export async function verifyBearer(
+  request: Request,
+): Promise<{ uid: string; email: string | undefined } | null> {
+  const header = request.headers.get("authorization");
+  if (!header?.startsWith("Bearer ")) return null;
+  try {
+    const decoded = await getAdminAuth().verifyIdToken(header.slice("Bearer ".length));
+    return { uid: decoded.uid, email: decoded.email };
+  } catch {
+    return null;
+  }
+}

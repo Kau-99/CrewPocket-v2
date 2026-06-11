@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type APIRequestContext, type Page } from "@playwright/test";
 
 /**
  * Fluxo crítico offline da SPEC §7:
@@ -12,7 +12,40 @@ const email = `e2e-${Date.now()}@crewpocket.test`;
 const password = "secret123";
 const jobName = `Attic job ${Date.now()}`;
 
-async function signupAndOnboard(page: Page) {
+/**
+ * Concede trial via REST dos emulators (equivale ao webhook do Stripe ter
+ * processado o checkout): auth emulator dá o uid, Firestore REST com
+ * `Bearer owner` ignora as rules — exatamente como o Admin SDK faria.
+ */
+async function grantTrial(request: APIRequestContext) {
+  const signIn = await request.post(
+    "http://127.0.0.1:9099/identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=demo-api-key",
+    { data: { email, password, returnSecureToken: true } },
+  );
+  const { localId } = (await signIn.json()) as { localId: string };
+
+  const response = await request.patch(
+    `http://127.0.0.1:8080/v1/projects/demo-crewpocket/databases/(default)/documents/subscriptions/${localId}`,
+    {
+      headers: { Authorization: "Bearer owner" },
+      data: {
+        fields: {
+          status: { stringValue: "trialing" },
+          plan: { stringValue: "pro" },
+          interval: { stringValue: "monthly" },
+          stripeCustomerId: { stringValue: "cus_e2e" },
+          stripeSubscriptionId: { stringValue: "sub_e2e" },
+          currentPeriodEnd: { timestampValue: "2030-01-01T00:00:00Z" },
+          cancelAtPeriodEnd: { booleanValue: false },
+          updatedAt: { timestampValue: new Date().toISOString() },
+        },
+      },
+    },
+  );
+  expect(response.ok()).toBe(true);
+}
+
+async function signupAndOnboard(page: Page, request: APIRequestContext) {
   await page.goto("/signup");
   await page.getByLabel("Email").fill(email);
   await page.getByLabel("Password", { exact: true }).fill(password);
@@ -22,14 +55,26 @@ async function signupAndOnboard(page: Page) {
   // primeiro login → onboarding pede o nome da empresa
   await page.getByLabel("Company name").fill("E2E Insulation LLC");
   await page.getByRole("button", { name: "Get started" }).click();
+
+  // sem subscription → paywall global (SPEC §6.2)
+  await expect(page.getByRole("heading", { name: "Start your 14-day free trial" })).toBeVisible({
+    timeout: 15_000,
+  });
+
+  // "webhook" concede o trial → app desbloqueia em tempo real (onSnapshot)
+  await grantTrial(request);
   await expect(page.getByRole("heading", { name: "Dashboard" })).toBeVisible({ timeout: 15_000 });
 }
 
-test("fluxo crítico offline: clock-in → custo → clock-out → sync", async ({ page, context }) => {
+test("fluxo crítico offline: clock-in → custo → clock-out → sync", async ({
+  page,
+  context,
+  request,
+}) => {
   await context.grantPermissions(["geolocation"]);
   await context.setGeolocation({ latitude: 30.2672, longitude: -97.7431 });
 
-  await signupAndOnboard(page);
+  await signupAndOnboard(page, request);
 
   // criar um job (online)
   await page.goto("/jobs");

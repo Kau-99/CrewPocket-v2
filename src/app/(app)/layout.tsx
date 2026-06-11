@@ -7,9 +7,11 @@ import { BottomTabs } from "@/components/shared/bottom-tabs";
 import { Header } from "@/components/shared/header";
 import { Sidebar } from "@/components/shared/sidebar";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Paywall } from "@/features/billing/components/paywall";
 import { OnboardingForm } from "@/features/settings/components/onboarding-form";
 import { useSettings } from "@/features/settings/hooks/use-settings";
 import { useAuth } from "@/hooks/use-auth";
+import { useSubscription } from "@/hooks/use-subscription";
 
 function ShellSkeleton() {
   return (
@@ -28,6 +30,7 @@ function ShellSkeleton() {
 export default function AppLayout({ children }: { children: ReactNode }) {
   const { user, loading: authLoading } = useAuth();
   const { settings, loading: settingsLoading } = useSettings();
+  const { subscription, loading: subscriptionLoading } = useSubscription();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -37,8 +40,13 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     }
   }, [authLoading, user, pathname, router]);
 
-  if (authLoading || !user || settingsLoading) return <ShellSkeleton />;
+  if (authLoading || !user || settingsLoading || subscriptionLoading) return <ShellSkeleton />;
   if (!settings) return <OnboardingForm />;
+
+  // Paywall global (SPEC §6.2): sem active/trialing, o app inteiro é o paywall
+  const subscriptionActive =
+    subscription?.status === "active" || subscription?.status === "trialing";
+  if (!subscriptionActive) return <Paywall />;
 
   return (
     <div className="flex min-h-dvh">

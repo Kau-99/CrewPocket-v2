@@ -8,6 +8,7 @@ import { useJobs } from "@/features/jobs/hooks/use-jobs";
 import { FieldClock } from "@/features/time-tracking/components/field-clock";
 import { TimeLogList } from "@/features/time-tracking/components/time-log-list";
 import { useRecentLogs } from "@/features/time-tracking/hooks/use-time-logs";
+import { PRO_CREW_LIMIT, useEntitlements } from "@/hooks/use-entitlements";
 import { useTranslation } from "@/hooks/use-translation";
 
 /** Modo campo (SPEC §8): mobile-first, alvos de toque generosos. */
@@ -16,6 +17,7 @@ export default function FieldPage() {
   const { data } = useJobs();
   const { data: crew } = useCrewMembers();
   const recentLogs = useRecentLogs();
+  const entitlements = useEntitlements();
 
   const jobs = useMemo(
     () =>
@@ -34,9 +36,13 @@ export default function FieldPage() {
   const selectedJob = jobs.find((job) => job.id === effectiveJobId);
 
   const jobOptions = jobs.map((job) => ({ id: job.id, name: job.name }));
-  const memberOptions = (crew ?? [])
-    .filter((member) => member.status === "active")
-    .map((member) => ({ id: member.id, name: member.name }));
+  // Time tracking de crew é Pro, até 5 membros; Solo = só o dono (SPEC §6.2)
+  const memberOptions = entitlements.crewTimeTracking
+    ? (crew ?? [])
+        .filter((member) => member.status === "active")
+        .slice(0, PRO_CREW_LIMIT)
+        .map((member) => ({ id: member.id, name: member.name }))
+    : [];
 
   return (
     <div className="mx-auto max-w-md space-y-4">
