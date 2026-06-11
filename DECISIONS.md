@@ -94,3 +94,31 @@ Consequência: item rastreado aqui para a auditoria final da §10 não esquecer.
 Contexto: `jobLaborCostCents(job, timeLogs, crew)` (SPEC §5) precisa de TimeLog/CrewMember, mas features são ilhas (§3.2.1) — jobs não pode importar schemas de time-tracking/crew.
 Decisão: a função vive em `features/jobs/utils.ts` com interfaces estruturais locais (`LaborLog`, `RatedMember`); o mesmo vale para o lineItemSchema duplicado em invoices (contrato de dados, não código).
 Consequência: zero acoplamento entre features; o TypeScript valida a compatibilidade estrutural na composição (páginas).
+
+## ADR-014 — Timer único por membro garantido por checagem client-side
+
+**Data:** 2026-06-10 · **Fase:** 3
+Contexto: SPEC §4.5 exige 1 timer aberto por crewMember. Transações do client SDK não fazem query, e unicidade real exigiria backend ou doc-id determinístico — incompatível com clock-in offline.
+Decisão: `clockIn` consulta os timers abertos (cache offline incluso) e rejeita duplicidade com AppError("validation"); rules validam clockOut > clockIn e turno ≤ 24h.
+Consequência: corrida real (2 devices offline simultâneos) pode duplicar — risco aceitável para equipes ≤ 5; revisitar se virar relato de campo.
+
+## ADR-015 — Conteúdo cross-feature entra no Job detail via slot (ReactNode)
+
+**Data:** 2026-06-10 · **Fase:** 3
+Contexto: a tab Time e o labor cost vêm de time-tracking/crew, mas JobDetail vive em features/jobs (ilhas, §3.2.1).
+Decisão: `JobDetail` recebe `timeTab: ReactNode` e `laborCostCents: number` como props; a página `jobs/[id]` compõe `<JobTimeLogs/>` e calcula o labor com `jobLaborCostCents`.
+Consequência: padrão de slot reutilizável para a tab Photos (Fase 3+) e vínculos de estimate/invoice (Fase 4).
+
+## ADR-016 — Escritas Firestore não aguardam ack do servidor
+
+**Data:** 2026-06-10 · **Fase:** 3
+Contexto: promises de setDoc/deleteDoc só resolvem com ack do servidor; aguardá-las travaria toda mutation offline (botões pendurados, toasts nunca disparam) — quebrando o fluxo crítico da §7.
+Decisão: `commitWrite()` (lib/firestore/write.ts) dispara a escrita e loga rejeições em background; mutations resolvem imediatamente com o dado validado por `schema.parse`. UI reflete via onSnapshot/cache.
+Consequência: rejeição de rules não vira toast (só log) — aceitável porque as rules espelham os schemas já validados no client; e2e offline cobre o fluxo completo.
+
+## ADR-017 — `.next` é junction para fora do OneDrive; emulators via `emulators:exec` no Playwright
+
+**Data:** 2026-06-10 · **Fase:** 3
+Contexto: o OneDrive desidrata arquivos recém-criados do `.next` (EINVAL readlink — node_modules escapa por exclusão automática do OneDrive); e `emulators:start` morre com stdin fechado (NPE no rules runtime) sob qualquer process manager.
+Decisão: `.next` → junction para `%LOCALAPPDATA%\crewpocket-next-cache`; webServer do Playwright usa `firebase emulators:exec` + `scripts/emulators-keepalive.cjs`.
+Consequência: dev/build estáveis nesta máquina; quem clonar o repo fora do OneDrive não precisa da junction (documentado no README).

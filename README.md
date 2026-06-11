@@ -35,6 +35,14 @@ SaaS de gestão de field service para empreiteiros americanos (insulation, HVAC,
 
 Ver SPEC.md §3. Resumo: `src/app` (rotas), `src/features/<domínio>` (ilhas — não importam umas das outras; lint quebra), `src/lib` (Firebase/Stripe/utils), `src/hooks`, `src/i18n` (dicionário tipado en/es).
 
+## Nota: projeto dentro do OneDrive
+
+O OneDrive desidrata arquivos novos de `.next` e quebra o dev server (`EINVAL readlink`). Nesta máquina, `.next` é uma **junction** para `%LOCALAPPDATA%\crewpocket-next-cache` (ADR-017). Se você clonar para fora do OneDrive, ignore; se dentro, recrie com:
+
+```powershell
+New-Item -ItemType Junction -Path .next -Target "$env:LOCALAPPDATA\crewpocket-next-cache"
+```
+
 ## Qualidade
 
 - Pre-commit: lint-staged (ESLint + Prettier) via Husky

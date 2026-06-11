@@ -1,5 +1,7 @@
-import { PagePlaceholder } from "@/components/shared/page-placeholder";
+import { CrewList } from "@/features/crew/components/crew-list";
+
+export const metadata = { title: "Crew" };
 
 export default function CrewPage() {
-  return <PagePlaceholder title="Crew" phase={3} />;
+  return <CrewList />;
 }

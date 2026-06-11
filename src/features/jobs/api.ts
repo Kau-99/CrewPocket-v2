@@ -18,6 +18,7 @@ import { AppError } from "@/lib/errors";
 import { db } from "@/lib/firebase/client";
 import { COLLECTIONS } from "@/lib/firestore/collections";
 import { createConverter, isNotNull } from "@/lib/firestore/converter";
+import { commitWrite } from "@/lib/firestore/write";
 import { newEntityBase } from "@/lib/firestore/schema-helpers";
 
 import { jobSchema, type CostItem, type Job, type JobFormValues, type JobStatus } from "./schemas";
@@ -76,7 +77,7 @@ export function subscribeToJob(id: string, onChange: (job: Job | null) => void):
   );
 }
 
-export async function createJob(uid: string, values: JobFormValues): Promise<Job> {
+export function createJob(uid: string, values: JobFormValues): Promise<Job> {
   const job = jobSchema.parse({
     ...newEntityBase(uid),
     ...values,
@@ -91,17 +92,25 @@ export async function createJob(uid: string, values: JobFormValues): Promise<Job
     estimateId: null,
     invoiceId: null,
   });
-  await setDoc(doc(db, COLLECTIONS.jobs, job.id), job);
-  return job;
+  commitWrite(setDoc(doc(db, COLLECTIONS.jobs, job.id), job), {
+    collection: COLLECTIONS.jobs,
+    docId: job.id,
+    op: "set",
+  });
+  return Promise.resolve(job);
 }
 
-export async function updateJob(
+export function updateJob(
   current: Job,
   values: Partial<Omit<Job, "id" | "ownerId" | "createdAt" | "schemaVersion">>,
 ): Promise<Job> {
   const updated = jobSchema.parse({ ...current, ...values, updatedAt: Timestamp.now() });
-  await setDoc(doc(db, COLLECTIONS.jobs, updated.id), updated);
-  return updated;
+  commitWrite(setDoc(doc(db, COLLECTIONS.jobs, updated.id), updated), {
+    collection: COLLECTIONS.jobs,
+    docId: updated.id,
+    op: "set",
+  });
+  return Promise.resolve(updated);
 }
 
 export function applyJobForm(current: Job, values: JobFormValues): Promise<Job> {
@@ -124,10 +133,20 @@ export function updateJobCosts(job: Job, costs: CostItem[]): Promise<Job> {
   return updateJob(job, { costs });
 }
 
-export async function deleteJob(id: string): Promise<void> {
-  await deleteDoc(doc(db, COLLECTIONS.jobs, id));
+export function deleteJob(id: string): Promise<void> {
+  commitWrite(deleteDoc(doc(db, COLLECTIONS.jobs, id)), {
+    collection: COLLECTIONS.jobs,
+    docId: id,
+    op: "delete",
+  });
+  return Promise.resolve();
 }
 
-export async function restoreJob(job: Job): Promise<void> {
-  await setDoc(doc(db, COLLECTIONS.jobs, job.id), jobSchema.parse(job));
+export function restoreJob(job: Job): Promise<void> {
+  commitWrite(setDoc(doc(db, COLLECTIONS.jobs, job.id), jobSchema.parse(job)), {
+    collection: COLLECTIONS.jobs,
+    docId: job.id,
+    op: "set",
+  });
+  return Promise.resolve();
 }

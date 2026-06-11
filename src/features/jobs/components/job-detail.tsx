@@ -2,7 +2,7 @@
 
 import { ArrowRight, Pencil, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { toast } from "sonner";
 
 import {
@@ -38,20 +38,34 @@ interface JobDetailProps {
   id: string;
   clientOptions: ClientOption[];
   minMarginPct: number;
+  /** Σ horas × rate dos timeLogs — calculado pela página (features são ilhas). */
+  laborCostCents: number;
+  /** Conteúdo da tab Time, injetado via slot pela página (ADR-015). */
+  timeTab: ReactNode;
 }
 
-function SummaryCard({ job, minMarginPct }: { job: Job; minMarginPct: number }) {
+function SummaryCard({
+  job,
+  minMarginPct,
+  laborCostCents,
+}: {
+  job: Job;
+  minMarginPct: number;
+  laborCostCents: number;
+}) {
   const dict = useTranslation();
   const labels = dict.jobs.summary;
-  const costs = jobTotalCostCents(job);
-  const marginPct = jobMarginPct(job.valueCents, costs);
+  const materials = jobTotalCostCents(job);
+  const realCost = materials + laborCostCents;
+  const marginPct = jobMarginPct(job.valueCents, realCost);
 
   const rows: [string, string, boolean][] = [
     [labels.value, formatCents(job.valueCents), false],
-    [labels.materials, formatCents(costs), false],
+    [labels.materials, formatCents(materials), false],
+    [labels.labor, formatCents(laborCostCents), false],
     [
       labels.margin,
-      `${formatCents(jobMarginCents(job.valueCents, costs))} (${marginPct.toFixed(0)}%)`,
+      `${formatCents(jobMarginCents(job.valueCents, realCost))} (${marginPct.toFixed(0)}%)`,
       marginPct < minMarginPct,
     ],
     [labels.balanceDue, formatCents(balanceDueCents(job)), false],
@@ -60,7 +74,7 @@ function SummaryCard({ job, minMarginPct }: { job: Job; minMarginPct: number }) 
   return (
     <section className="rounded-lg border p-4">
       <h2 className="mb-3 font-semibold">{labels.title}</h2>
-      <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <dl className="grid grid-cols-2 gap-3 sm:grid-cols-5">
         {rows.map(([label, value, alert]) => (
           <div key={label}>
             <dt className="text-xs text-muted-foreground">{label}</dt>
@@ -70,12 +84,17 @@ function SummaryCard({ job, minMarginPct }: { job: Job; minMarginPct: number }) 
           </div>
         ))}
       </dl>
-      <p className="mt-3 text-xs text-muted-foreground">{labels.laborNote}</p>
     </section>
   );
 }
 
-export function JobDetail({ id, clientOptions, minMarginPct }: JobDetailProps) {
+export function JobDetail({
+  id,
+  clientOptions,
+  minMarginPct,
+  laborCostCents,
+  timeTab,
+}: JobDetailProps) {
   const dict = useTranslation();
   const router = useRouter();
   const { job, loading } = useJob(id);
@@ -179,15 +198,11 @@ export function JobDetail({ id, clientOptions, minMarginPct }: JobDetailProps) {
           <TabsTrigger value="photos">{dict.jobs.tabs.photos}</TabsTrigger>
         </TabsList>
         <TabsContent value="overview" className="space-y-4">
-          <SummaryCard job={job} minMarginPct={minMarginPct} />
+          <SummaryCard job={job} minMarginPct={minMarginPct} laborCostCents={laborCostCents} />
           <JobCostsEditor job={job} />
           {job.description && <p className="text-sm text-muted-foreground">{job.description}</p>}
         </TabsContent>
-        <TabsContent value="time">
-          <p className="p-6 text-center text-sm text-muted-foreground">
-            {dict.jobs.comingSoonTime}
-          </p>
-        </TabsContent>
+        <TabsContent value="time">{timeTab}</TabsContent>
         <TabsContent value="photos">
           <p className="p-6 text-center text-sm text-muted-foreground">
             {dict.jobs.comingSoonPhotos}
