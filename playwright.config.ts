@@ -28,10 +28,11 @@ export default defineConfig({
       timeout: 120_000,
     },
     {
-      command: "pnpm dev",
+      // build de produção: elimina a flakiness da compilação on-demand do dev
+      command: "pnpm build && pnpm start",
       url: "http://localhost:3000/api/health",
       reuseExistingServer: !process.env.CI,
-      timeout: 120_000,
+      timeout: 300_000,
     },
   ],
 });

@@ -19,7 +19,8 @@ SaaS de gestão de field service para empreiteiros americanos (insulation, HVAC,
 | `pnpm typecheck`                                       | `tsc --noEmit`                                                        |
 | `pnpm lint`                                            | ESLint com zero warnings tolerados                                    |
 | `pnpm test` / `pnpm test:watch` / `pnpm test:coverage` | Unit tests (Vitest)                                                   |
-| `pnpm test:e2e`                                        | Playwright (sobe o dev server sozinho)                                |
+| `pnpm test:e2e`                                        | Playwright (builda e sobe produção + emulators sozinho)               |
+| `pnpm test:rules`                                      | Testes de Firestore Rules + webhook Stripe no emulator                |
 | `pnpm emulators`                                       | Firebase emulators (Auth 9099, Firestore 8080, Storage 9199, UI 4000) |
 | `pnpm format`                                          | Prettier em tudo                                                      |
 
@@ -29,7 +30,33 @@ SaaS de gestão de field service para empreiteiros americanos (insulation, HVAC,
 2. Copie `.env.example` para `.env.local`. Para desenvolver contra os emulators, os valores `demo-*` já criados funcionam (`NEXT_PUBLIC_USE_EMULATORS=true`).
 3. `pnpm emulators` num terminal, `pnpm dev` noutro.
 
-> Setup completo de Firebase (projeto real, App Check) será documentado na Fase 7.
+## Firebase (projeto real)
+
+1. Crie um projeto no [Firebase Console](https://console.firebase.google.com) e habilite **Authentication** (Google + Email/Password), **Firestore** e **Storage**.
+2. Em Project Settings → General, registre um Web App e copie a config para as vars `NEXT_PUBLIC_FIREBASE_*` do `.env.local` (e mude `NEXT_PUBLIC_USE_EMULATORS=false`).
+3. Em Project Settings → Service Accounts, gere uma chave e preencha `FIREBASE_ADMIN_PROJECT_ID`, `FIREBASE_ADMIN_CLIENT_EMAIL` e `FIREBASE_ADMIN_PRIVATE_KEY` (mantenha os `\n` literais).
+4. **App Check**: em App Check, registre o app com **reCAPTCHA v3** e copie a site key para `NEXT_PUBLIC_RECAPTCHA_SITE_KEY`. Para dev contra o projeto real, gere um debug token no console do browser e coloque em `NEXT_PUBLIC_APPCHECK_DEBUG_TOKEN`. Ative o _enforcement_ para Firestore/Auth/Storage quando tudo estiver verde.
+5. Publique regras e índices: `firebase deploy --only firestore:rules,firestore:indexes,storage` (faça login com `firebase login` e troque o projeto em `.firebaserc`).
+
+## Deploy (Vercel)
+
+1. Importe o repositório na Vercel (framework Next.js detectado automaticamente; build `pnpm build`).
+2. Cadastre TODAS as vars do `.env.example` em Project Settings → Environment Variables (as `NEXT_PUBLIC_*` também). `NEXT_PUBLIC_APP_URL` = URL de produção.
+3. No Stripe (modo live), crie o endpoint de webhook `https://<seu-dominio>/api/stripe/webhook` com os 4 eventos da seção Stripe e copie o `whsec` para `STRIPE_WEBHOOK_SECRET`.
+4. Adicione o domínio da Vercel em Authentication → Settings → Authorized domains no Firebase.
+
+## Migração da v1
+
+`scripts/migrate-v1.ts` converte os dados do CrewPocket v1 (dólares float → centavos, millis → Timestamp, status capitalizado → lowercase, costs com `total` → derivado) validando cada doc com os schemas v2:
+
+```powershell
+# relatório sem escrever nada (default)
+pnpm dlx tsx scripts/migrate-v1.ts <uid-destino>
+# gravar de verdade
+pnpm dlx tsx scripts/migrate-v1.ts <uid-destino> --apply
+```
+
+Origem via `GOOGLE_APPLICATION_CREDENTIALS` + `V1_PROJECT_ID`; contra emulators, defina `FIRESTORE_EMULATOR_HOST`.
 
 ## Stripe (billing)
 

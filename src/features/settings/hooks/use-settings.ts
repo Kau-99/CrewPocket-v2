@@ -30,9 +30,35 @@ export function useSettings(): SettingsState {
       return;
     }
     setState({ settings: null, loading: true });
-    return subscribeToSettings(uid, (settings) => {
-      setState({ settings, loading: false });
-    });
+
+    // erro do watch encerra o listener → re-assina com backoff
+    let cancelled = false;
+    let unsubscribe: (() => void) | undefined;
+    let attempt = 0;
+    const start = () => {
+      unsubscribe = subscribeToSettings(
+        uid,
+        (settings) => {
+          attempt = 0;
+          setState({ settings, loading: false });
+        },
+        () => {
+          if (cancelled) return;
+          attempt += 1;
+          setTimeout(
+            () => {
+              if (!cancelled) start();
+            },
+            Math.min(8_000, 1_000 * attempt),
+          );
+        },
+      );
+    };
+    start();
+    return () => {
+      cancelled = true;
+      unsubscribe?.();
+    };
   }, [uid]);
 
   // Idioma do doc → store de UI (dicionário ativo)

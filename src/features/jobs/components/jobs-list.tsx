@@ -23,6 +23,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
+import { useNewShortcut } from "@/hooks/use-new-shortcut";
 import { useTranslation } from "@/hooks/use-translation";
 import { cn, formatCents } from "@/lib/utils";
 
@@ -52,6 +53,9 @@ export function JobsList({ clientOptions, minMarginPct }: JobsListProps) {
 
   const debouncedSearch = useDebouncedValue(search);
   const { data, isLoading, hasNextPage, fetchNextPage, isFetchingNextPage } = useJobs();
+  useNewShortcut(() => {
+    setFormOpen(true);
+  });
 
   const allJobs = useMemo(() => data?.pages.flatMap((page) => page.items) ?? [], [data]);
 

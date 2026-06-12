@@ -32,6 +32,7 @@ import {
 } from "../utils";
 import { JobCostsEditor } from "./job-costs-editor";
 import { JobFormDialog, type ClientOption } from "./job-form-dialog";
+import { JobPhotos } from "./job-photos";
 import { JobStatusBadge } from "./job-status-badge";
 
 interface JobDetailProps {
@@ -208,9 +209,7 @@ export function JobDetail({
         </TabsContent>
         <TabsContent value="time">{timeTab}</TabsContent>
         <TabsContent value="photos">
-          <p className="p-6 text-center text-sm text-muted-foreground">
-            {dict.jobs.comingSoonPhotos}
-          </p>
+          <JobPhotos job={job} />
         </TabsContent>
       </Tabs>
 

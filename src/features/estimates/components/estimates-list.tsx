@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
+import { useNewShortcut } from "@/hooks/use-new-shortcut";
 import { useTranslation } from "@/hooks/use-translation";
 import { formatCents } from "@/lib/utils";
 
@@ -49,6 +50,9 @@ export function EstimatesList({ clientOptions, taxPctDefault }: EstimatesListPro
 
   const debouncedSearch = useDebouncedValue(search);
   const { data, isLoading, hasNextPage, fetchNextPage, isFetchingNextPage } = useEstimates();
+  useNewShortcut(() => {
+    setNewOpen(true);
+  });
   const { create } = useEstimateMutations({
     onCreated: (estimate) => {
       router.push(`/estimates/${estimate.id}`);

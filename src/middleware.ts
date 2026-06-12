@@ -7,7 +7,9 @@ import { NextResponse, type NextRequest } from "next/server";
  * reCAPTCHA v3 (App Check) — serviços, não CDNs de libs (SPEC §2).
  */
 export function middleware(request: NextRequest) {
-  if (process.env.NODE_ENV !== "production") {
+  // dev precisa de unsafe-eval; com emulators o connect-src (127.0.0.1)
+  // não bate — CSP só em produção real (ADR-010)
+  if (process.env.NODE_ENV !== "production" || process.env.NEXT_PUBLIC_USE_EMULATORS === "true") {
     return NextResponse.next();
   }
 

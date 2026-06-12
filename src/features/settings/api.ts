@@ -2,6 +2,7 @@ import { doc, onSnapshot, setDoc } from "firebase/firestore";
 
 import { db } from "@/lib/firebase/client";
 import { COLLECTIONS } from "@/lib/firestore/collections";
+import { commitWrite } from "@/lib/firestore/write";
 import { logger } from "@/lib/logger";
 
 import { buildDefaultSettings, settingsSchema, type Settings } from "./schemas";
@@ -18,12 +19,15 @@ function settingsRef(uid: string) {
 export function subscribeToSettings(
   uid: string,
   onChange: (settings: Settings | null) => void,
+  onError?: () => void,
 ): () => void {
   return onSnapshot(
     settingsRef(uid),
     (snapshot) => {
       if (!snapshot.exists()) {
-        onChange(null);
+        // cache-miss ≠ doc inexistente: só o servidor confirma "primeiro
+        // login" (senão o onboarding aparece indevidamente)
+        if (!snapshot.metadata.fromCache) onChange(null);
         return;
       }
       const parsed = settingsSchema.safeParse(snapshot.data());
@@ -38,8 +42,9 @@ export function subscribeToSettings(
       onChange(parsed.data);
     },
     (error) => {
+      // erro encerra o listener — o chamador re-assina com backoff
       logger.error("settings subscription error", { uid, code: error.code });
-      onChange(null);
+      onError?.();
     },
   );
 }
@@ -48,4 +53,19 @@ export function subscribeToSettings(
 export async function createSettings(uid: string, companyName: string): Promise<void> {
   const settings = buildDefaultSettings(companyName.trim());
   await setDoc(settingsRef(uid), settingsSchema.parse(settings));
+}
+
+/** Update parcial validado — offline-first via commitWrite (ADR-016). */
+export function updateSettings(
+  uid: string,
+  current: Settings,
+  partial: Partial<Settings>,
+): Promise<Settings> {
+  const updated = settingsSchema.parse({ ...current, ...partial });
+  commitWrite(setDoc(settingsRef(uid), updated), {
+    collection: COLLECTIONS.settings,
+    docId: uid,
+    op: "set",
+  });
+  return Promise.resolve(updated);
 }

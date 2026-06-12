@@ -178,3 +178,24 @@ Consequência: zero escrita extra e sempre consistente; "marcar como lida" seria
 Contexto: o guard do clock-in fazia `getDocs` que pendurava offline (regressão exposta pelo e2e quando o nº de listeners cresceu); e o clique antes do select carregar disparava erro.
 Decisão: o guard usa os timers abertos já observados pela UI (zero rede, ADR-014 mantido); o botão Clock In fica desabilitado sem job selecionado.
 Consequência: clock-in 100% offline-safe; o e2e crítico volta a ser determinístico.
+
+## ADR-026 — Fila de fotos offline é best-effort em memória
+
+**Data:** 2026-06-12 · **Fase:** 7
+Contexto: SPEC §7 menciona foto "em fila local" no cenário offline; uploads do Storage não têm persistência offline nativa.
+Decisão: fotos tiradas offline ficam numa fila em memória e sobem no evento `online`; não sobrevivem a reload offline (persistir blobs em IndexedDB é feature v3).
+Consequência: cobre o caso comum (sinal oscilando no campo); o doc do job em si é 100% offline-safe.
+
+## ADR-027 — E2E roda contra build de produção; SW nunca intercepta 127.0.0.1
+
+**Data:** 2026-06-12 · **Fase:** 7
+Contexto: o dev server (compilação on-demand) tornava a suite e2e flaky sob contenção; e o e2e em produção expôs um bug real — o service worker interceptava o webchannel do Firestore para os emulators (127.0.0.1), pendurando transações.
+Decisão: Playwright webServer = `pnpm build && pnpm start`; SW ganhou `NetworkOnly` para `127.0.0.1`; CSP do middleware pula quando `NEXT_PUBLIC_USE_EMULATORS=true` (origens do emulator não passam no connect-src).
+Consequência: 10/10 e2e em ~1,5min, estáveis; bug de PWA+emulator corrigido antes de produção.
+
+## ADR-028 — Medição Lighthouse do /dashboard é o fluxo não-autenticado
+
+**Data:** 2026-06-12 · **Fase:** 7
+Contexto: §10 pede Lighthouse ≥90 em /dashboard, mas headless sem sessão mede skeleton → redirect a /login (LCP 5–7s domina; TBT ~0; alta variância 66–78).
+Decisão: registrar as duas medições — `/` 96/100/96 (alvo batido) e `/dashboard` unauth 66–78/100/96 — e aplicar a melhoria estrutural (Recharts lazy: −29KB no First Load do dashboard). Medição autenticada fica manual (DevTools) no projeto real.
+Consequência: número reportado é honesto; o caminho autenticado real não paga o custo do redirect medido.

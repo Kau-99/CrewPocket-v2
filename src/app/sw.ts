@@ -18,6 +18,8 @@ const FIREBASE_HOSTS = [
   "firebaseapp.com",
   "gstatic.com",
   "google.com",
+  // emulators locais — o webchannel do Firestore não pode ser interceptado
+  "127.0.0.1",
 ];
 
 const serwist = new Serwist({

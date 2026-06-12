@@ -144,6 +144,10 @@ export function updateJobCosts(job: Job, costs: CostItem[]): Promise<Job> {
   return updateJob(job, { costs });
 }
 
+export function updateJobPhotos(job: Job, photoUrls: string[]): Promise<Job> {
+  return updateJob(job, { photoUrls });
+}
+
 export function deleteJob(id: string): Promise<void> {
   commitWrite(deleteDoc(doc(db, COLLECTIONS.jobs, id)), {
     collection: COLLECTIONS.jobs,

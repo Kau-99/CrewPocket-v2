@@ -16,6 +16,7 @@ import {
   restoreJob,
   subscribeToJob,
   updateJobCosts,
+  updateJobPhotos,
   type JobsPage,
   type PageCursor,
 } from "../api";
@@ -119,6 +120,12 @@ export function useJobMutations({ onDone }: { onDone?: (job: Job) => void } = {}
     onSuccess: invalidate,
   });
 
+  const setPhotos = useMutation({
+    mutationFn: ({ job, photoUrls }: { job: Job; photoUrls: string[] }) =>
+      updateJobPhotos(job, photoUrls),
+    onSuccess: invalidate,
+  });
+
   const remove = useMutation({
     mutationFn: (job: Job) => deleteJob(job.id),
     onSuccess: invalidate,
@@ -129,5 +136,5 @@ export function useJobMutations({ onDone }: { onDone?: (job: Job) => void } = {}
     onSuccess: invalidate,
   });
 
-  return { create, update, changeStatus, setCosts, remove, undoRemove };
+  return { create, update, changeStatus, setCosts, setPhotos, remove, undoRemove };
 }

@@ -27,6 +27,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
+import { useNewShortcut } from "@/hooks/use-new-shortcut";
 import { useTranslation } from "@/hooks/use-translation";
 
 import { useClientMutations, useClients } from "../hooks/use-clients";
@@ -44,6 +45,10 @@ export function ClientsList() {
   const debouncedSearch = useDebouncedValue(search);
   const { data, isLoading, hasNextPage, fetchNextPage, isFetchingNextPage } = useClients();
   const { archive, remove, undoRemove } = useClientMutations();
+  useNewShortcut(() => {
+    setEditing(undefined);
+    setFormOpen(true);
+  });
 
   const allClients = useMemo(() => data?.pages.flatMap((page) => page.items) ?? [], [data]);
 

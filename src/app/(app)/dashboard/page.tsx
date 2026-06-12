@@ -1,12 +1,20 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useMemo } from "react";
 
+import { Skeleton } from "@/components/ui/skeleton";
 import { useCrewMembers } from "@/features/crew/hooks/use-crew";
 import { KpiCards, type KpiItem } from "@/features/dashboard/components/kpi-cards";
 import { QuickActions } from "@/features/dashboard/components/quick-actions";
 import { RecentJobs } from "@/features/dashboard/components/recent-jobs";
-import { RevenueChart } from "@/features/dashboard/components/revenue-chart";
+
+// Recharts pesa ~100KB — só entra quando o dashboard renderiza de verdade
+const RevenueChart = dynamic(
+  () =>
+    import("@/features/dashboard/components/revenue-chart").then((module_) => module_.RevenueChart),
+  { ssr: false, loading: () => <Skeleton className="h-72 w-full" /> },
+);
 import {
   activeJobsCount,
   laborByJobMap,

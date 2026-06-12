@@ -4,6 +4,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, type ReactNode } from "react";
 
 import { BottomTabs } from "@/components/shared/bottom-tabs";
+import { CommandPalette } from "@/components/shared/command-palette";
 import { Header } from "@/components/shared/header";
 import { Sidebar } from "@/components/shared/sidebar";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -56,6 +57,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         <main className="flex-1 p-4 pb-24 md:p-6 md:pb-6">{children}</main>
       </div>
       <BottomTabs />
+      <CommandPalette />
     </div>
   );
 }
