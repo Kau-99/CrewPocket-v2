@@ -7,7 +7,13 @@ import { useState, type ReactNode } from "react";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/hooks/use-auth";
 
-export function Providers({ children }: { children: ReactNode }) {
+export function Providers({
+  children,
+  nonce,
+}: {
+  children: ReactNode;
+  nonce?: string | undefined;
+}) {
   // useState garante 1 QueryClient por montagem (não compartilhado entre requests)
   const [queryClient] = useState(
     () =>
@@ -22,7 +28,13 @@ export function Providers({ children }: { children: ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
+      <ThemeProvider
+        attribute="class"
+        defaultTheme="dark"
+        enableSystem
+        disableTransitionOnChange
+        {...(nonce ? { nonce } : {})}
+      >
         <AuthProvider>
           {children}
           <Toaster position="top-center" />

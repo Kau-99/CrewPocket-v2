@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { headers } from "next/headers";
 import type { ReactNode } from "react";
 
 import "@/env";
@@ -33,10 +34,14 @@ export const viewport: Viewport = {
 
 // Tema controlado pelo next-themes (attribute="class", default dark — SPEC §8)
 export default function RootLayout({ children }: { children: ReactNode }) {
+  // O script anti-flash do next-themes é inline: sem o nonce da request a CSP
+  // o bloqueia (ADR-029). Header injetado pelo middleware; ausente em dev.
+  const nonce = headers().get("x-nonce") ?? undefined;
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body className="min-h-dvh">
-        <Providers>{children}</Providers>
+        <Providers nonce={nonce}>{children}</Providers>
       </body>
     </html>
   );
