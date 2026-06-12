@@ -134,6 +134,24 @@ describe("processStripeEvent — tabela de eventos da SPEC §6.1", () => {
     expect(await readSubscriptionDoc()).toMatchObject({ status: "active" });
   });
 
+  it("falha de processamento libera a marca de idempotência — o retry do Stripe reprocessa", async () => {
+    const event = fakeEvent("evt_retry", "checkout.session.completed", {
+      client_reference_id: UID,
+      subscription: "sub_123",
+    });
+
+    // 1ª entrega: retrieve do Stripe falha DEPOIS da marca reservada
+    const failing: WebhookContext = {
+      db,
+      getSubscription: () => Promise.reject(new Error("stripe transient outage")),
+    };
+    await expect(processStripeEvent(event, failing)).rejects.toThrow("stripe transient outage");
+
+    // retry com o MESMO event.id não pode virar "duplicate" — tem que processar
+    expect(await processStripeEvent(event, ctx())).toBe("processed");
+    expect(await readSubscriptionDoc()).toMatchObject({ status: "trialing", plan: "pro" });
+  });
+
   it("evento fora da tabela é ignorado sem erro", async () => {
     const result = await processStripeEvent(
       fakeEvent("evt_other", "customer.created", { id: CUSTOMER }),

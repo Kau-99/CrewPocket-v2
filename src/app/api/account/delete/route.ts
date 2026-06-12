@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { getAdminAuth, getAdminDb, verifyBearer } from "@/lib/firebase/admin";
 import { logger } from "@/lib/logger";
 import { isRateLimited } from "@/lib/rate-limit";
+import { getStripe } from "@/lib/stripe/client";
 
 export const runtime = "nodejs";
 
@@ -34,6 +35,23 @@ export async function POST(request: Request) {
 
   try {
     const db = getAdminDb();
+
+    // Cancelar a assinatura no Stripe ANTES de apagar qualquer coisa — senão
+    // a cobrança continua para sempre numa conta que não existe mais. Falha
+    // aqui aborta a exclusão (preferível a deixar cobrança órfã).
+    const customerSnap = await db.collection("customers").doc(user.uid).get();
+    const stripeCustomerId = customerSnap.get("stripeCustomerId") as string | undefined;
+    if (stripeCustomerId) {
+      const subscriptions = await getStripe().subscriptions.list({
+        customer: stripeCustomerId,
+        limit: 100,
+      });
+      for (const subscription of subscriptions.data) {
+        if (subscription.status !== "canceled") {
+          await getStripe().subscriptions.cancel(subscription.id);
+        }
+      }
+    }
 
     for (const collectionName of OWNED_COLLECTIONS) {
       // batches de 400 (limite 500) até esvaziar

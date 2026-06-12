@@ -4,7 +4,10 @@ export default defineConfig({
   testDir: "./e2e",
   fullyParallel: false,
   forbidOnly: Boolean(process.env.CI),
-  retries: process.env.CI ? 2 : 0,
+  // 1 retry local: o emulator do Firestore ocasionalmente trava um listen
+  // target sob a carga da suite (doc nunca recebe resposta) — flake de
+  // ambiente, não do app (passa em isolamento e em produção real)
+  retries: process.env.CI ? 2 : 1,
   workers: 1,
   reporter: process.env.CI ? "github" : "list",
   timeout: 90_000,

@@ -5,7 +5,6 @@ import {
   doc,
   getDocs,
   limit,
-  onSnapshot,
   orderBy,
   query,
   setDoc,
@@ -16,6 +15,7 @@ import { AppError } from "@/lib/errors";
 import { db } from "@/lib/firebase/client";
 import { COLLECTIONS } from "@/lib/firestore/collections";
 import { createConverter, isNotNull } from "@/lib/firestore/converter";
+import { subscribeQueryWithRetry } from "@/lib/firestore/subscribe";
 import { commitWrite } from "@/lib/firestore/write";
 import { newEntityBase } from "@/lib/firestore/schema-helpers";
 
@@ -79,20 +79,23 @@ export function clockOut(log: TimeLog): Promise<TimeLog> {
   return Promise.resolve(closed);
 }
 
-/** Timers abertos do dono (todos os membros) — header do /field. */
+/**
+ * Timers abertos do dono (todos os membros) — header do /field. Erro NUNCA
+ * vira lista vazia: o guard de timer único do clockIn depende desta lista
+ * (lista falsa-vazia permitiria dois timers abertos do mesmo membro).
+ */
 export function subscribeToOpenLogs(uid: string, onChange: (logs: TimeLog[]) => void): () => void {
-  return onSnapshot(
-    query(
-      collection(db, COLLECTIONS.timeLogs).withConverter(converter),
-      where("ownerId", "==", uid),
-      where("clockOut", "==", null),
-    ),
+  const openQuery = query(
+    collection(db, COLLECTIONS.timeLogs).withConverter(converter),
+    where("ownerId", "==", uid),
+    where("clockOut", "==", null),
+  );
+  return subscribeQueryWithRetry(
+    openQuery,
     (snapshot) => {
       onChange(snapshot.docs.map((docSnap) => docSnap.data()).filter(isNotNull));
     },
-    () => {
-      onChange([]);
-    },
+    "timeLogs/open",
   );
 }
 
@@ -102,12 +105,13 @@ export function subscribeToJobLogs(
   jobId: string,
   onChange: (logs: TimeLog[]) => void,
 ): () => void {
-  return onSnapshot(
-    query(
-      collection(db, COLLECTIONS.timeLogs).withConverter(converter),
-      where("ownerId", "==", uid),
-      where("jobId", "==", jobId),
-    ),
+  const jobQuery = query(
+    collection(db, COLLECTIONS.timeLogs).withConverter(converter),
+    where("ownerId", "==", uid),
+    where("jobId", "==", jobId),
+  );
+  return subscribeQueryWithRetry(
+    jobQuery,
     (snapshot) => {
       const logs = snapshot.docs
         .map((docSnap) => docSnap.data())
@@ -115,9 +119,7 @@ export function subscribeToJobLogs(
         .sort((a, b) => b.clockIn.toMillis() - a.clockIn.toMillis());
       onChange(logs);
     },
-    () => {
-      onChange([]);
-    },
+    `timeLogs/job/${jobId}`,
   );
 }
 
@@ -127,19 +129,18 @@ export function subscribeToRecentLogs(
   onChange: (logs: TimeLog[]) => void,
   count = 8,
 ): () => void {
-  return onSnapshot(
-    query(
-      collection(db, COLLECTIONS.timeLogs).withConverter(converter),
-      where("ownerId", "==", uid),
-      orderBy("clockIn", "desc"),
-      limit(count),
-    ),
+  const recentQuery = query(
+    collection(db, COLLECTIONS.timeLogs).withConverter(converter),
+    where("ownerId", "==", uid),
+    orderBy("clockIn", "desc"),
+    limit(count),
+  );
+  return subscribeQueryWithRetry(
+    recentQuery,
     (snapshot) => {
       onChange(snapshot.docs.map((docSnap) => docSnap.data()).filter(isNotNull));
     },
-    () => {
-      onChange([]);
-    },
+    "timeLogs/recent",
   );
 }
 

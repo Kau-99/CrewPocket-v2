@@ -13,8 +13,10 @@ import { storage } from "@/lib/firebase/client";
 import { compressToWebP } from "@/lib/image";
 import { logger } from "@/lib/logger";
 
-import { useJobMutations } from "../hooks/use-jobs";
+import { addJobPhoto, removeJobPhoto } from "../api";
 import type { Job } from "../schemas";
+
+const MAX_PHOTOS = 30;
 
 /**
  * Fila best-effort para uploads offline (SPEC §7): blobs ficam em memória
@@ -66,7 +68,6 @@ function armFlush() {
 export function JobPhotos({ job }: { job: Job }) {
   const dict = useTranslation();
   const { user } = useAuth();
-  const { setPhotos } = useJobMutations();
   const [uploading, setUploading] = useState(false);
   const [lightbox, setLightbox] = useState<string | null>(null);
 
@@ -74,11 +75,13 @@ export function JobPhotos({ job }: { job: Job }) {
     if (!user) return;
     setUploading(true);
     try {
-      for (const file of Array.from(files).slice(0, 5)) {
+      // arrayUnion no onDone: uploads do lote/fila nunca se sobrescrevem
+      const slots = Math.max(0, MAX_PHOTOS - job.photoUrls.length);
+      for (const file of Array.from(files).slice(0, Math.min(5, slots))) {
         const blob = await compressToWebP(file, 1600);
         const path = `users/${user.uid}/jobs/${job.id}/${crypto.randomUUID()}.webp`;
         const result = await uploadNowOrQueue(path, blob, (url) => {
-          setPhotos.mutate({ job, photoUrls: [...job.photoUrls, url].slice(0, 30) });
+          addJobPhoto(job.id, url);
         });
         if (result === "queued") toast(dict.jobs.photos.queuedToast);
       }
@@ -90,10 +93,7 @@ export function JobPhotos({ job }: { job: Job }) {
   }
 
   function handleDelete(url: string) {
-    setPhotos.mutate(
-      { job, photoUrls: job.photoUrls.filter((photo) => photo !== url) },
-      { onError: () => toast.error(dict.errors.unknown) },
-    );
+    removeJobPhoto(job.id, url);
     // best-effort no Storage (a URL contém o path encodado)
     try {
       const path = decodeURIComponent(new URL(url).pathname.split("/o/")[1] ?? "");

@@ -104,6 +104,21 @@ export async function processStripeEvent(
   });
   if (!fresh) return "duplicate";
 
+  try {
+    return await applyEvent(event, ctx);
+  } catch (error) {
+    // A marca de idempotência foi reservada mas o processamento falhou: sem
+    // liberar, o retry do Stripe viraria "duplicate" e o evento se perderia.
+    await ctx.db
+      .collection("processedEvents")
+      .doc(event.id)
+      .delete()
+      .catch(() => undefined);
+    throw error;
+  }
+}
+
+async function applyEvent(event: Stripe.Event, ctx: WebhookContext): Promise<ProcessResult> {
   switch (event.type) {
     case "checkout.session.completed": {
       const session = event.data.object;

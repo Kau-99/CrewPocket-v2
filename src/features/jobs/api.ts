@@ -1,15 +1,17 @@
 import {
   Timestamp,
+  arrayRemove,
+  arrayUnion,
   collection,
   deleteDoc,
   doc,
   getDocs,
   limit,
-  onSnapshot,
   orderBy,
   query,
   setDoc,
   startAfter,
+  updateDoc,
   where,
   type QueryDocumentSnapshot,
 } from "firebase/firestore";
@@ -18,6 +20,7 @@ import { AppError } from "@/lib/errors";
 import { db } from "@/lib/firebase/client";
 import { COLLECTIONS } from "@/lib/firestore/collections";
 import { createConverter, isNotNull } from "@/lib/firestore/converter";
+import { subscribeDocWithRetry } from "@/lib/firestore/subscribe";
 import { commitWrite } from "@/lib/firestore/write";
 import { newEntityBase } from "@/lib/firestore/schema-helpers";
 
@@ -77,14 +80,18 @@ export async function fetchJobsByClient(uid: string, clientId: string): Promise<
 
 /** Detalhe em tempo real (custos editados refletem na hora; offline-first). */
 export function subscribeToJob(id: string, onChange: (job: Job | null) => void): () => void {
-  return onSnapshot(
-    doc(db, COLLECTIONS.jobs, id).withConverter(converter),
+  const ref = doc(db, COLLECTIONS.jobs, id).withConverter(converter);
+  return subscribeDocWithRetry(
+    ref,
     (snapshot) => {
-      onChange(snapshot.exists() ? snapshot.data() : null);
+      if (!snapshot.exists()) {
+        // cache-miss ≠ doc inexistente — só ausência confirmada vira "not found"
+        if (!snapshot.metadata.fromCache) onChange(null);
+        return;
+      }
+      onChange(snapshot.data());
     },
-    () => {
-      onChange(null);
-    },
+    `jobs/${id}`,
   );
 }
 
@@ -144,8 +151,29 @@ export function updateJobCosts(job: Job, costs: CostItem[]): Promise<Job> {
   return updateJob(job, { costs });
 }
 
-export function updateJobPhotos(job: Job, photoUrls: string[]): Promise<Job> {
-  return updateJob(job, { photoUrls });
+/**
+ * Fotos via arrayUnion/arrayRemove: uploads concorrentes (lote, fila offline,
+ * múltiplas abas) nunca se sobrescrevem — set integral com array capturado
+ * perdia fotos quando 2+ onDone corriam antes do snapshot voltar.
+ */
+export function addJobPhoto(jobId: string, url: string): void {
+  commitWrite(
+    updateDoc(doc(db, COLLECTIONS.jobs, jobId), {
+      photoUrls: arrayUnion(url),
+      updatedAt: Timestamp.now(),
+    }),
+    { collection: COLLECTIONS.jobs, docId: jobId, op: "set" },
+  );
+}
+
+export function removeJobPhoto(jobId: string, url: string): void {
+  commitWrite(
+    updateDoc(doc(db, COLLECTIONS.jobs, jobId), {
+      photoUrls: arrayRemove(url),
+      updatedAt: Timestamp.now(),
+    }),
+    { collection: COLLECTIONS.jobs, docId: jobId, op: "set" },
+  );
 }
 
 export function deleteJob(id: string): Promise<void> {

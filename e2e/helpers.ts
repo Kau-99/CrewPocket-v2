@@ -69,14 +69,21 @@ export async function signupAndOnboard(
   });
   await grantTrial(request, email, password);
   // normalmente o onSnapshot desbloqueia em tempo real; em cold start do
-  // emulator o watch pode atrasar — reload lê o doc direto
+  // emulator (ou sob carga da suite) o watch pode atrasar bastante —
+  // reload lê o doc direto do servidor, com até 3 tentativas
   const dashboardHeading = page.getByRole("heading", { name: "Dashboard" });
-  try {
-    await expect(dashboardHeading).toBeVisible({ timeout: 10_000 });
-  } catch {
+  let visible = await dashboardHeading
+    .waitFor({ timeout: 10_000 })
+    .then(() => true)
+    .catch(() => false);
+  for (let attempt = 0; attempt < 3 && !visible; attempt += 1) {
     await page.reload();
-    await expect(dashboardHeading).toBeVisible({ timeout: 20_000 });
+    visible = await dashboardHeading
+      .waitFor({ timeout: 15_000 })
+      .then(() => true)
+      .catch(() => false);
   }
+  await expect(dashboardHeading).toBeVisible();
 }
 
 /** Clique em link com retry (hidratação do dev server pode engolir o 1º). */

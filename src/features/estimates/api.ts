@@ -5,7 +5,6 @@ import {
   doc,
   getDocs,
   limit,
-  onSnapshot,
   orderBy,
   query,
   runTransaction,
@@ -21,6 +20,7 @@ import { COLLECTIONS } from "@/lib/firestore/collections";
 import { nextDocumentNumber } from "@/lib/firestore/counters";
 import { createConverter, isNotNull } from "@/lib/firestore/converter";
 import { newEntityBase } from "@/lib/firestore/schema-helpers";
+import { subscribeDocWithRetry } from "@/lib/firestore/subscribe";
 import { commitWrite } from "@/lib/firestore/write";
 
 import { estimateSchema, type Estimate, type LineItem } from "./schemas";
@@ -95,15 +95,19 @@ export function subscribeToEstimate(
   id: string,
   onChange: (estimate: Estimate | null) => void,
 ): () => void {
-  return onSnapshot(
-    doc(db, COLLECTIONS.estimates, id).withConverter(converter),
+  const ref = doc(db, COLLECTIONS.estimates, id).withConverter(converter);
+  return subscribeDocWithRetry(
+    ref,
     (snapshot) => {
-      const data = snapshot.exists() ? snapshot.data() : null;
+      if (!snapshot.exists()) {
+        // cache-miss ≠ doc inexistente — só ausência confirmada vira "not found"
+        if (!snapshot.metadata.fromCache) onChange(null);
+        return;
+      }
+      const data = snapshot.data();
       onChange(data ? withEffectiveStatus(data) : null);
     },
-    () => {
-      onChange(null);
-    },
+    `estimates/${id}`,
   );
 }
 
