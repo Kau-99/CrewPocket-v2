@@ -16,5 +16,7 @@ test("landing renders and security headers are present", async ({ page }) => {
   expect(headers["x-content-type-options"]).toBe("nosniff");
   expect(headers["referrer-policy"]).toBe("strict-origin-when-cross-origin");
 
-  await expect(page.getByRole("heading", { level: 1 })).toContainText("CrewPocket");
+  await expect(page.getByRole("heading", { level: 1 })).toContainText(
+    "Run your contracting business",
+  );
 });
