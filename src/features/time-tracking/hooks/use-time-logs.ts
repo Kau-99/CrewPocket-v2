@@ -1,6 +1,6 @@
 "use client";
 
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 
 import { useAuth } from "@/hooks/use-auth";
@@ -10,6 +10,7 @@ import {
   clockIn,
   clockOut,
   deleteTimeLog,
+  fetchAllLogs,
   subscribeToJobLogs,
   subscribeToOpenLogs,
   subscribeToRecentLogs,
@@ -72,6 +73,18 @@ export function useRecentLogs(): TimeLog[] {
   return logs;
 }
 
+/** Dashboard/analytics — todos os logs do dono (labor, payroll). */
+export function useAllLogs() {
+  const { user } = useAuth();
+  const uid = user?.uid;
+
+  return useQuery({
+    queryKey: [KEY, "all", uid],
+    enabled: Boolean(uid),
+    queryFn: () => (uid ? fetchAllLogs(uid) : Promise.resolve([])),
+  });
+}
+
 export function useTimeLogMutations() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -81,10 +94,13 @@ export function useTimeLogMutations() {
   };
 
   const start = useMutation({
-    mutationFn: async (input: Omit<ClockInInput, "gps">) => {
+    mutationFn: async (
+      input: Omit<ClockInInput, "gps"> & { openLogs: Pick<TimeLog, "crewMemberId">[] },
+    ) => {
       if (!user) throw new Error("not authenticated");
       const gps = await captureGps();
-      return clockIn(user.uid, { ...input, gps });
+      const { openLogs, ...rest } = input;
+      return clockIn(user.uid, { ...rest, gps }, openLogs);
     },
     onSuccess: invalidate,
   });

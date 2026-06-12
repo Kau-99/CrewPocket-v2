@@ -11,6 +11,7 @@ import {
   runTransaction,
   setDoc,
   startAfter,
+  updateDoc,
   where,
   type QueryDocumentSnapshot,
 } from "firebase/firestore";
@@ -184,13 +185,44 @@ export function markInvoiceSent(invoice: Invoice): Promise<Invoice> {
   return updateInvoice(invoice, { status: "sent" });
 }
 
-/** Mark Paid: quita o total derivado e registra paidAt. */
+/**
+ * Mark Paid: quita o total derivado e registra paidAt; sincroniza o job
+ * vinculado (paymentStatus/paidCents/paidAt) — fecha a pendência do
+ * ADR-019 e alimenta os KPIs do dashboard.
+ */
 export function markInvoicePaid(invoice: Invoice): Promise<Invoice> {
+  const now = Timestamp.now();
+  const totalCents = computeInvoiceTotals(invoice).totalCents;
+
+  commitWrite(
+    updateDoc(doc(db, COLLECTIONS.jobs, invoice.jobId), {
+      paymentStatus: "paid",
+      paidCents: totalCents,
+      paidAt: now,
+      updatedAt: now,
+    }),
+    { collection: COLLECTIONS.jobs, docId: invoice.jobId, op: "set" },
+  );
+
   return updateInvoice(invoice, {
     status: "paid",
-    paidAt: Timestamp.now(),
-    paidCents: computeInvoiceTotals(invoice).totalCents,
+    paidAt: now,
+    paidCents: totalCents,
   });
+}
+
+/** Para dashboard/analytics — escala da persona permite fetch único (ADR-011). */
+export async function fetchAllInvoices(uid: string): Promise<Invoice[]> {
+  const snapshot = await getDocs(
+    query(
+      collection(db, COLLECTIONS.invoices).withConverter(converter),
+      where("ownerId", "==", uid),
+    ),
+  );
+  return snapshot.docs
+    .map((docSnap) => docSnap.data())
+    .filter(isNotNull)
+    .map(withEffectiveStatus);
 }
 
 export function voidInvoice(invoice: Invoice): Promise<Invoice> {

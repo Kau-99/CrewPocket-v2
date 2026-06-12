@@ -53,6 +53,17 @@ export async function fetchJobsPage(uid: string, cursor: PageCursor | null): Pro
   };
 }
 
+/** Para dashboard/analytics — escala da persona permite fetch único (ADR-011). */
+export async function fetchAllJobs(uid: string): Promise<Job[]> {
+  const snapshot = await getDocs(
+    query(collection(db, COLLECTIONS.jobs).withConverter(converter), where("ownerId", "==", uid)),
+  );
+  return snapshot.docs
+    .map((docSnap) => docSnap.data())
+    .filter(isNotNull)
+    .sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
+}
+
 export async function fetchJobsByClient(uid: string, clientId: string): Promise<Job[]> {
   const snapshot = await getDocs(
     query(

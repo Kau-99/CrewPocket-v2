@@ -1,12 +1,13 @@
 "use client";
 
-import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { useAuth } from "@/hooks/use-auth";
 
 import {
   createMileageLog,
   deleteMileageLog,
+  fetchAllMileage,
   fetchMileagePage,
   restoreMileageLog,
   updateMileageLog,
@@ -31,6 +32,18 @@ export function useMileageLogs() {
       return fetchMileagePage(uid, pageParam);
     },
     getNextPageParam: (lastPage) => lastPage.cursor,
+  });
+}
+
+/** Tax summary anual — todas as milhas do dono. */
+export function useAllMileage() {
+  const { user } = useAuth();
+  const uid = user?.uid;
+
+  return useQuery({
+    queryKey: [KEY, "all", uid],
+    enabled: Boolean(uid),
+    queryFn: () => (uid ? fetchAllMileage(uid) : Promise.resolve([])),
   });
 }
 

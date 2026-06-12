@@ -77,7 +77,7 @@ export function FieldClock(props: FieldClockProps) {
       return;
     }
     start.mutate(
-      { jobId, crewMemberId: memberId, crewName: memberName },
+      { jobId, crewMemberId: memberId, crewName: memberName, openLogs },
       {
         onSuccess: () => toast.success(dict.time.clockedInToast),
         onError: (error) =>
@@ -91,6 +91,8 @@ export function FieldClock(props: FieldClockProps) {
   }
 
   const pending = start.isPending || stop.isPending;
+  // sem job selecionado não há o que registrar (e o select ainda pode estar carregando)
+  const clockDisabled = pending || (!activeLog && jobId === "");
 
   return (
     <section className="space-y-4 rounded-lg border p-4">
@@ -139,7 +141,7 @@ export function FieldClock(props: FieldClockProps) {
 
       <Button
         size="lg"
-        disabled={pending}
+        disabled={clockDisabled}
         onClick={handleClock}
         className={cn(
           "h-20 w-full text-xl font-bold",

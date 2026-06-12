@@ -32,23 +32,16 @@ export interface ClockInInput {
 }
 
 /**
- * Timer único por membro (SPEC §4.5): checagem por query antes de criar.
- * Guard client-side — suficiente para a persona e compatível com
- * offline-first; ver ADR-014.
+ * Timer único por membro (SPEC §4.5): o guard usa os timers abertos que a
+ * UI já observa via onSnapshot — zero leitura de rede, funciona offline
+ * (ADR-014). getDocs aqui travava o clock-in sem sinal.
  */
-export async function clockIn(uid: string, input: ClockInInput): Promise<TimeLog> {
-  const openSnapshot = await getDocs(
-    query(
-      collection(db, COLLECTIONS.timeLogs).withConverter(converter),
-      where("ownerId", "==", uid),
-      where("clockOut", "==", null),
-    ),
-  );
-  const alreadyOpen = openSnapshot.docs
-    .map((docSnap) => docSnap.data())
-    .filter(isNotNull)
-    .some((log) => log.crewMemberId === input.crewMemberId);
-  if (alreadyOpen) {
+export function clockIn(
+  uid: string,
+  input: ClockInInput,
+  openLogs: Pick<TimeLog, "crewMemberId">[],
+): Promise<TimeLog> {
+  if (openLogs.some((log) => log.crewMemberId === input.crewMemberId)) {
     throw new AppError("validation", "member already has an open timer");
   }
 
@@ -68,7 +61,7 @@ export async function clockIn(uid: string, input: ClockInInput): Promise<TimeLog
     docId: log.id,
     op: "set",
   });
-  return log;
+  return Promise.resolve(log);
 }
 
 /** Fecha o timer: clockOut > clockIn, teto de 24h (rules rejeitam acima). */
@@ -148,6 +141,17 @@ export function subscribeToRecentLogs(
       onChange([]);
     },
   );
+}
+
+/** Para dashboard/analytics (labor por job, payroll). */
+export async function fetchAllLogs(uid: string): Promise<TimeLog[]> {
+  const snapshot = await getDocs(
+    query(
+      collection(db, COLLECTIONS.timeLogs).withConverter(converter),
+      where("ownerId", "==", uid),
+    ),
+  );
+  return snapshot.docs.map((docSnap) => docSnap.data()).filter(isNotNull);
 }
 
 export function deleteTimeLog(id: string): Promise<void> {

@@ -10,6 +10,7 @@ import {
   changeJobStatus,
   createJob,
   deleteJob,
+  fetchAllJobs,
   fetchJobsByClient,
   fetchJobsPage,
   restoreJob,
@@ -35,6 +36,18 @@ export function useJobs() {
       return fetchJobsPage(uid, pageParam);
     },
     getNextPageParam: (lastPage) => lastPage.cursor,
+  });
+}
+
+/** Dashboard/analytics/notificações — todos os jobs do dono. */
+export function useAllJobs() {
+  const { user } = useAuth();
+  const uid = user?.uid;
+
+  return useQuery({
+    queryKey: [LIST_KEY, "all", uid],
+    enabled: Boolean(uid),
+    queryFn: () => (uid ? fetchAllJobs(uid) : Promise.resolve([])),
   });
 }
 

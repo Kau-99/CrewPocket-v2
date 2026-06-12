@@ -77,6 +77,20 @@ export async function fetchEstimatesPage(
   };
 }
 
+/** Para notificações/analytics — todos os estimates do dono (ADR-011). */
+export async function fetchAllEstimates(uid: string): Promise<Estimate[]> {
+  const snapshot = await getDocs(
+    query(
+      collection(db, COLLECTIONS.estimates).withConverter(converter),
+      where("ownerId", "==", uid),
+    ),
+  );
+  return snapshot.docs
+    .map((docSnap) => docSnap.data())
+    .filter(isNotNull)
+    .map(withEffectiveStatus);
+}
+
 export function subscribeToEstimate(
   id: string,
   onChange: (estimate: Estimate | null) => void,

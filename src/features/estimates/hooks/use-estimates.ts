@@ -1,6 +1,6 @@
 "use client";
 
-import { useMutation, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 
 import { useAuth } from "@/hooks/use-auth";
@@ -9,6 +9,7 @@ import {
   convertEstimateToJob,
   createEstimate,
   deleteEstimate,
+  fetchAllEstimates,
   fetchEstimatesPage,
   markEstimateAccepted,
   markEstimateDeclined,
@@ -37,6 +38,18 @@ export function useEstimates() {
       return fetchEstimatesPage(uid, pageParam);
     },
     getNextPageParam: (lastPage) => lastPage.cursor,
+  });
+}
+
+/** Notificações/analytics — todos os estimates do dono. */
+export function useAllEstimates() {
+  const { user } = useAuth();
+  const uid = user?.uid;
+
+  return useQuery({
+    queryKey: [KEY, "all", uid],
+    enabled: Boolean(uid),
+    queryFn: () => (uid ? fetchAllEstimates(uid) : Promise.resolve([])),
   });
 }
 

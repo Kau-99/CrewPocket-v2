@@ -157,3 +157,24 @@ Consequência: zero rota "vazada"; o doc `subscriptions` que só o webhook escre
 Contexto: o paywall bloquearia todos os fluxos e2e; rodar Stripe real no Playwright local é frágil (o teste §10-e2e-5 com `stripe listen` fica para a Fase 7 com chaves reais).
 Decisão: após o onboarding, o teste asserta o paywall e então grava `subscriptions/{uid}` via Firestore REST com `Bearer owner` (equivalente exato do Admin SDK do webhook); o app desbloqueia via onSnapshot.
 Consequência: o e2e cobre o paywall e o desbloqueio em tempo real; a lógica do webhook em si tem 10 testes próprios contra o emulator (assinatura, 4 eventos, idempotência).
+
+## ADR-023 — Definições das métricas do dashboard/analytics
+
+**Data:** 2026-06-12 · **Fase:** 6
+Contexto: a SPEC pede KPIs "com comparativo vs mês anterior" sem definir as bases de cálculo.
+Decisão: Revenue = invoices pagas (paidAt na janela, totais derivados); comparativo = MTD vs o MESMO trecho do mês anterior; Margin MTD = (receita − materiais − labor dos jobs faturados) / receita; Unpaid = Σ balanceDue dos jobs `invoiced`; série de 12 meses: receita por paidAt × custos por job.date; Mark Paid passou a sincronizar o job (fecha ADR-019).
+Consequência: tudo derivado dos docs existentes, sem agregados persistidos; testado em features/dashboard|analytics/utils.
+
+## ADR-024 — Notificações derivadas na leitura, sem coleção própria
+
+**Data:** 2026-06-12 · **Fase:** 6
+Contexto: SPEC §5 lista 5 notificações in-app; nada exige persistência/estado lido-não-lido.
+Decisão: `useNotifications` deriva a lista dos dados já carregados (jobs/inventory/estimates/invoices); expired/overdue continuam sendo auto-marcados na leitura pelas APIs.
+Consequência: zero escrita extra e sempre consistente; "marcar como lida" seria feature nova (v3) com coleção própria.
+
+## ADR-025 — Clock-in valida timer único com os dados do onSnapshot, e botão exige job
+
+**Data:** 2026-06-12 · **Fase:** 6
+Contexto: o guard do clock-in fazia `getDocs` que pendurava offline (regressão exposta pelo e2e quando o nº de listeners cresceu); e o clique antes do select carregar disparava erro.
+Decisão: o guard usa os timers abertos já observados pela UI (zero rede, ADR-014 mantido); o botão Clock In fica desabilitado sem job selecionado.
+Consequência: clock-in 100% offline-safe; o e2e crítico volta a ser determinístico.

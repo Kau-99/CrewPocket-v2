@@ -60,6 +60,17 @@ export async function fetchMileagePage(
   };
 }
 
+/** Para o tax summary anual (milhas × rate). */
+export async function fetchAllMileage(uid: string): Promise<MileageLog[]> {
+  const snapshot = await getDocs(
+    query(
+      collection(db, COLLECTIONS.mileageLogs).withConverter(converter),
+      where("ownerId", "==", uid),
+    ),
+  );
+  return snapshot.docs.map((docSnap) => docSnap.data()).filter(isNotNull);
+}
+
 export function createMileageLog(uid: string, values: MileageFormValues): Promise<MileageLog> {
   const log = mileageLogSchema.parse({
     ...newEntityBase(uid),

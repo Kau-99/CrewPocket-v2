@@ -1,7 +1,7 @@
 "use client";
 
 import { signOut } from "firebase/auth";
-import { CloudOff, LogOut, UserRound } from "lucide-react";
+import { CloudOff, LogOut, RefreshCw, UserRound } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
@@ -13,8 +13,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { NotificationsBell } from "@/components/shared/notifications-bell";
 import { useAuth } from "@/hooks/use-auth";
 import { useOnlineStatus } from "@/hooks/use-online-status";
+import { usePendingWrites } from "@/hooks/use-pending-writes";
 import { useTranslation } from "@/hooks/use-translation";
 import { auth } from "@/lib/firebase/client";
 
@@ -22,6 +24,7 @@ export function Header() {
   const dict = useTranslation();
   const { user } = useAuth();
   const isOnline = useOnlineStatus();
+  const hasPendingWrites = usePendingWrites();
   const router = useRouter();
 
   async function handleSignOut() {
@@ -44,8 +47,18 @@ export function Header() {
           {dict.common.offlineBadge}
         </span>
       )}
+      {isOnline && hasPendingWrites && (
+        <span
+          role="status"
+          className="flex items-center gap-1.5 rounded-full bg-sky-500/15 px-3 py-1 text-xs font-medium text-sky-400"
+        >
+          <RefreshCw className="size-3.5 animate-spin" aria-hidden="true" />
+          {dict.common.syncingBadge}
+        </span>
+      )}
 
-      <div className="ml-auto">
+      <div className="ml-auto flex items-center gap-1">
+        <NotificationsBell />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" aria-label={user?.email ?? "Account"}>

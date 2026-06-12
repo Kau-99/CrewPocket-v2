@@ -1,6 +1,8 @@
+import withSerwistInit from "@serwist/next";
+
 /**
  * Headers de segurança da seção 6.5 da SPEC.
- * CSP com nonce entra na Fase 1 junto com o middleware (ADR-004).
+ * CSP com nonce vive no middleware (ADR-004/ADR-010).
  */
 const securityHeaders = [
   { key: "X-Frame-Options", value: "DENY" },
@@ -8,6 +10,13 @@ const securityHeaders = [
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   { key: "Permissions-Policy", value: "geolocation=(self)" },
 ];
+
+// PWA (SPEC §7): SW só em produção — em dev atrapalha HMR e os emulators
+const withSerwist = withSerwistInit({
+  swSrc: "src/app/sw.ts",
+  swDest: "public/sw.js",
+  disable: process.env.NODE_ENV === "development",
+});
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -23,4 +32,4 @@ const nextConfig = {
   },
 };
 
-export default nextConfig;
+export default withSerwist(nextConfig);

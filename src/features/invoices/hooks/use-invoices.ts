@@ -1,6 +1,6 @@
 "use client";
 
-import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 
 import { useAuth } from "@/hooks/use-auth";
@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/use-auth";
 import {
   createInvoiceFromJob,
   deleteInvoice,
+  fetchAllInvoices,
   fetchInvoicesPage,
   markInvoicePaid,
   markInvoiceSent,
@@ -36,6 +37,18 @@ export function useInvoices() {
       return fetchInvoicesPage(uid, pageParam);
     },
     getNextPageParam: (lastPage) => lastPage.cursor,
+  });
+}
+
+/** Dashboard/analytics/notificações — todas as invoices do dono. */
+export function useAllInvoices() {
+  const { user } = useAuth();
+  const uid = user?.uid;
+
+  return useQuery({
+    queryKey: [KEY, "all", uid],
+    enabled: Boolean(uid),
+    queryFn: () => (uid ? fetchAllInvoices(uid) : Promise.resolve([])),
   });
 }
 
