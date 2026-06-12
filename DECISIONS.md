@@ -199,3 +199,10 @@ Consequência: 10/10 e2e em ~1,5min, estáveis; bug de PWA+emulator corrigido an
 Contexto: §10 pede Lighthouse ≥90 em /dashboard, mas headless sem sessão mede skeleton → redirect a /login (LCP 5–7s domina; TBT ~0; alta variância 66–78).
 Decisão: registrar as duas medições — `/` 96/100/96 (alvo batido) e `/dashboard` unauth 66–78/100/96 — e aplicar a melhoria estrutural (Recharts lazy: −29KB no First Load do dashboard). Medição autenticada fica manual (DevTools) no projeto real.
 Consequência: número reportado é honesto; o caminho autenticado real não paga o custo do redirect medido.
+
+## ADR-029 — CSP com nonce exige render dinâmico: `force-dynamic` global
+
+**Data:** 2026-06-12 · **Fase:** pós-deploy
+Contexto: em produção real a CSP bloqueou todos os scripts inline do Next — as 30 páginas eram pré-renderizadas no build, então o HTML servido não carregava o nonce gerado por request no middleware e o app não hidratava (descoberto só em produção: local/e2e pulam a CSP com emulators, ADR-010/027).
+Decisão: `export const dynamic = "force-dynamic"` no layout raiz — todas as páginas renderizam por request e o Next aplica o nonce da request aos seus scripts; mantém-se nonce + strict-dynamic sem `unsafe-inline` (§6.5). Alternativa rejeitada: `unsafe-inline` em script-src violaria a SPEC.
+Consequência: perde-se SSG (TTFB um pouco maior, páginas viram função por request); shells são leves e client-side, e o SW/PWA segue cacheando estáticos. Favicon adicionado ao metadata no mesmo commit (404 ruidoso no console).
