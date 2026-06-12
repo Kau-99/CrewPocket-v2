@@ -213,3 +213,10 @@ Consequência: perde-se SSG (TTFB um pouco maior, páginas viram função por re
 Contexto: revisão integral atrás de bugs. Seis reais: (1) webhook marcava idempotência ANTES de processar — falha após a marca fazia o retry do Stripe virar "duplicate" e o evento se perdia; (2) deletar conta não cancelava a assinatura no Stripe — cobrança eterna; (3) erro de listener nos details (job/estimate/invoice) virava "not found" e o listener morria; (4) erro no listener de timers abertos virava lista vazia — quebrando o guard de timer único; (5) upload de fotos em lote se sobrescrevia (closure stale sobre photoUrls); (6) signup abortava se o e-mail de verificação falhasse.
 Decisão: (1) liberar a marca no catch e re-lançar; (2) cancelar subscriptions do customer antes de apagar (falha aborta a exclusão); (3/4) `subscribeDocWithRetry`/`subscribeQueryWithRetry` em lib/firestore/subscribe — backoff + cache-miss ≠ ausência; (5) fotos via arrayUnion/arrayRemove; (6) sendEmailVerification best-effort. E2e: o emulator trava ocasionalmente um listen target sob a carga da suite (doc nunca responde; some em isolamento; produção ok) → `retries: 1` local + helper com 3 reloads.
 Consequência: webhook à prova de falha transiente (testado), billing sem cobrança órfã, listeners uniformemente resilientes; suite tolera o flake do emulator sem mascarar bug de produto (falha 2× consecutivas ainda reprova).
+
+## ADR-031 — Fallback offline de navegação no SW
+
+**Data:** 2026-06-12 · **Fase:** pós-deploy
+Contexto: com tudo force-dynamic (ADR-029), navegação sem rede para página fora do cache fazia o SW responder com erro ("no-response") — tela de erro do browser em produção (visto no /login).
+Decisão: rota `/~offline` server-rendered (legível sem hidratação) adicionada ao precache do SW + `fallbacks.entries` do Serwist para `request.destination === "document"`; e2e cobre (SW ativo → offline → rota nunca visitada → fallback visível).
+Consequência: offline nunca mostra erro do browser; o usuário vê que os dados de campo sincronizam ao reconectar. Bump manual da `revision` se a página mudar.

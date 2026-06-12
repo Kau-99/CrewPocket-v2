@@ -23,7 +23,9 @@ const FIREBASE_HOSTS = [
 ];
 
 const serwist = new Serwist({
-  precacheEntries: self.__SW_MANIFEST ?? [],
+  // /~offline entra no precache para o fallback funcionar sem rede
+  // (bump da revision se a página mudar — todas as rotas são dinâmicas, ADR-029)
+  precacheEntries: [...(self.__SW_MANIFEST ?? []), { url: "/~offline", revision: "1" }],
   skipWaiting: true,
   clientsClaim: true,
   navigationPreload: true,
@@ -35,6 +37,18 @@ const serwist = new Serwist({
     },
     ...defaultCache,
   ],
+  // navegação sem rede e sem cache: página offline em vez de erro do browser
+  // (visto em produção: FetchEvent /login → no-response)
+  fallbacks: {
+    entries: [
+      {
+        url: "/~offline",
+        matcher({ request }) {
+          return request.destination === "document";
+        },
+      },
+    ],
+  },
 });
 
 serwist.addEventListeners();
