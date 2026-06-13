@@ -20,6 +20,19 @@ declare global {
 
 const useEmulators = env.NEXT_PUBLIC_USE_EMULATORS === "true";
 
+/**
+ * App Check só liga com uma chave reCAPTCHA REAL. Com a chave placeholder
+ * (`pending-real-key` em prod, `demo-recaptcha-key` em dev) o SDK carregava
+ * o script do reCAPTCHA e falhava em loop — barulho no console e requisições
+ * ao Google que navegadores com bloqueio (Brave/uBlock) cancelam, podendo
+ * atrapalhar o login. Sentinelas que NÓS controlamos, não o formato do Google.
+ */
+const recaptchaKey = env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
+const appCheckEnabled =
+  recaptchaKey.length > 0 &&
+  !recaptchaKey.startsWith("pending") &&
+  !recaptchaKey.startsWith("demo");
+
 function createApp(): FirebaseApp {
   if (getApps().length > 0) return getApp();
 
@@ -33,13 +46,14 @@ function createApp(): FirebaseApp {
   });
 
   // App Check (SPEC §6.5): reCAPTCHA v3 em produção real; com emulators não há
-  // backend de App Check, então fica desligado (ADR-008).
-  if (typeof window !== "undefined" && !useEmulators) {
+  // backend de App Check, então fica desligado (ADR-008). Só inicializa com
+  // chave real — placeholder quebrava o carregamento do reCAPTCHA (ADR-032).
+  if (typeof window !== "undefined" && !useEmulators && appCheckEnabled) {
     if (env.NEXT_PUBLIC_APPCHECK_DEBUG_TOKEN) {
       globalThis.FIREBASE_APPCHECK_DEBUG_TOKEN = env.NEXT_PUBLIC_APPCHECK_DEBUG_TOKEN;
     }
     initializeAppCheck(app, {
-      provider: new ReCaptchaV3Provider(env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY),
+      provider: new ReCaptchaV3Provider(recaptchaKey),
       isTokenAutoRefreshEnabled: true,
     });
   }

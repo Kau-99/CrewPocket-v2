@@ -220,3 +220,10 @@ Consequência: webhook à prova de falha transiente (testado), billing sem cobra
 Contexto: com tudo force-dynamic (ADR-029), navegação sem rede para página fora do cache fazia o SW responder com erro ("no-response") — tela de erro do browser em produção (visto no /login).
 Decisão: rota `/~offline` server-rendered (legível sem hidratação) adicionada ao precache do SW + `fallbacks.entries` do Serwist para `request.destination === "document"`; e2e cobre (SW ativo → offline → rota nunca visitada → fallback visível).
 Consequência: offline nunca mostra erro do browser; o usuário vê que os dados de campo sincronizam ao reconectar. Bump manual da `revision` se a página mudar.
+
+## ADR-032 — App Check só inicializa com chave reCAPTCHA real
+
+**Data:** 2026-06-13 · **Fase:** pós-deploy
+Contexto: em produção a chave NEXT_PUBLIC_RECAPTCHA_SITE_KEY é o placeholder `pending-real-key` (App Check ainda não configurado). O client inicializava o App Check mesmo assim, o SDK carregava o script do reCAPTCHA do Google e falhava em loop (`appCheck/recaptcha-error`, `recaptcha__pt_br.js: net::ERR_FAILED`). Em navegadores com bloqueio agressivo (Brave Shields) essas chamadas ao google.com são canceladas e poluíam o console, dando a impressão de login quebrado (o login em si funcionava — enforcement está off).
+Decisão: só inicializar App Check quando a chave for real — sentinelas que nós controlamos (`pending*`, `demo*`) são tratadas como "não configurado" e o App Check fica desligado. Quando o Kauã puser a chave reCAPTCHA real, liga sozinho.
+Consequência: console limpo, zero requisições bloqueadas ao Google no login/signup, sem mudança de comportamento quando a chave real existir. Login validado em Chromium limpo (entra no dashboard) e via e2e commercial-flow.
