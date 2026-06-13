@@ -33,6 +33,14 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
     [data],
   );
 
+  const crewOptions = useMemo(
+    () =>
+      (crew ?? [])
+        .filter((member) => member.status === "active")
+        .map((member) => ({ id: member.id, name: member.name })),
+    [crew],
+  );
+
   const laborCostCents = jobLaborCostCents(
     logs,
     (crew ?? []).map((member) => ({ id: member.id, hourlyRateCents: member.hourlyRateCents })),
@@ -43,6 +51,7 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
     <JobDetail
       id={params.id}
       clientOptions={clientOptions}
+      crewOptions={crewOptions}
       minMarginPct={settings?.minMarginPct ?? 20}
       laborCostCents={laborCostCents}
       timeTab={<JobTimeLogs jobId={params.id} />}

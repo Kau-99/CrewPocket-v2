@@ -24,7 +24,14 @@ import { subscribeDocWithRetry } from "@/lib/firestore/subscribe";
 import { commitWrite } from "@/lib/firestore/write";
 import { newEntityBase } from "@/lib/firestore/schema-helpers";
 
-import { jobSchema, type CostItem, type Job, type JobFormValues, type JobStatus } from "./schemas";
+import {
+  jobSchema,
+  type ChecklistItem,
+  type CostItem,
+  type Job,
+  type JobFormValues,
+  type JobStatus,
+} from "./schemas";
 import { canTransition } from "./utils";
 
 export const PAGE_SIZE = 25;
@@ -149,6 +156,10 @@ export function changeJobStatus(job: Job, to: JobStatus): Promise<Job> {
 
 export function updateJobCosts(job: Job, costs: CostItem[]): Promise<Job> {
   return updateJob(job, { costs });
+}
+
+export function updateJobChecklist(job: Job, checklist: ChecklistItem[]): Promise<Job> {
+  return updateJob(job, { checklist });
 }
 
 /**

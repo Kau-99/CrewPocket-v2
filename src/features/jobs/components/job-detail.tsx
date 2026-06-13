@@ -30,14 +30,16 @@ import {
   jobMarginPct,
   jobTotalCostCents,
 } from "../utils";
+import { JobChecklist } from "./job-checklist";
 import { JobCostsEditor } from "./job-costs-editor";
-import { JobFormDialog, type ClientOption } from "./job-form-dialog";
+import { JobFormDialog, type ClientOption, type CrewOption } from "./job-form-dialog";
 import { JobPhotos } from "./job-photos";
 import { JobStatusBadge } from "./job-status-badge";
 
 interface JobDetailProps {
   id: string;
   clientOptions: ClientOption[];
+  crewOptions: CrewOption[];
   minMarginPct: number;
   /** Σ horas × rate dos timeLogs — calculado pela página (features são ilhas). */
   laborCostCents: number;
@@ -45,6 +47,42 @@ interface JobDetailProps {
   timeTab: ReactNode;
   /** Ações extras (ex.: Create invoice, View estimate) — slot da página. */
   extraActions?: ReactNode;
+}
+
+function DetailsCard({ job, crewOptions }: { job: Job; crewOptions: CrewOption[] }) {
+  const dict = useTranslation();
+  const f = dict.jobs.fields;
+  const crewNames = job.crewIds
+    .map((id) => crewOptions.find((c) => c.id === id)?.name)
+    .filter((name): name is string => Boolean(name));
+  const location = [job.address, job.city, job.state, job.zip].filter(Boolean).join(", ");
+
+  const rows: [string, string][] = [
+    [f.serviceType, job.serviceType],
+    [f.scheduledTime, job.scheduledTime],
+    [f.areaSqft, job.areaSqft ? job.areaSqft.toLocaleString() : ""],
+    [dict.jobs.fields.address, location],
+    [f.siteContactName, [job.siteContactName, job.siteContactPhone].filter(Boolean).join(" · ")],
+    [f.referralSource, job.referralSource],
+    [f.deadline, job.deadline ? job.deadline.toDate().toLocaleDateString() : ""],
+    [f.crew, crewNames.join(", ")],
+  ].filter((row): row is [string, string] => Boolean(row[1]));
+
+  if (rows.length === 0) return null;
+
+  return (
+    <section className="rounded-lg border p-4">
+      <h2 className="mb-3 font-semibold">{dict.jobs.tabs.overview}</h2>
+      <dl className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        {rows.map(([label, value]) => (
+          <div key={label} className="flex flex-col">
+            <dt className="text-xs text-muted-foreground">{label}</dt>
+            <dd className="text-sm font-medium">{value}</dd>
+          </div>
+        ))}
+      </dl>
+    </section>
+  );
 }
 
 function SummaryCard({
@@ -94,6 +132,7 @@ function SummaryCard({
 export function JobDetail({
   id,
   clientOptions,
+  crewOptions,
   minMarginPct,
   laborCostCents,
   timeTab,
@@ -204,8 +243,12 @@ export function JobDetail({
         </TabsList>
         <TabsContent value="overview" className="space-y-4">
           <SummaryCard job={job} minMarginPct={minMarginPct} laborCostCents={laborCostCents} />
+          <DetailsCard job={job} crewOptions={crewOptions} />
+          <JobChecklist job={job} />
           <JobCostsEditor job={job} />
-          {job.description && <p className="text-sm text-muted-foreground">{job.description}</p>}
+          {job.description && (
+            <p className="whitespace-pre-line text-sm text-muted-foreground">{job.description}</p>
+          )}
         </TabsContent>
         <TabsContent value="time">{timeTab}</TabsContent>
         <TabsContent value="photos">
@@ -218,6 +261,7 @@ export function JobDetail({
         onOpenChange={setEditOpen}
         job={job}
         clientOptions={clientOptions}
+        crewOptions={crewOptions}
       />
 
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>

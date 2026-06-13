@@ -15,11 +15,12 @@ import {
   fetchJobsPage,
   restoreJob,
   subscribeToJob,
+  updateJobChecklist,
   updateJobCosts,
   type JobsPage,
   type PageCursor,
 } from "../api";
-import type { CostItem, Job, JobFormValues, JobStatus } from "../schemas";
+import type { ChecklistItem, CostItem, Job, JobFormValues, JobStatus } from "../schemas";
 
 const LIST_KEY = "jobs";
 
@@ -119,6 +120,12 @@ export function useJobMutations({ onDone }: { onDone?: (job: Job) => void } = {}
     onSuccess: invalidate,
   });
 
+  const setChecklist = useMutation({
+    mutationFn: ({ job, checklist }: { job: Job; checklist: ChecklistItem[] }) =>
+      updateJobChecklist(job, checklist),
+    onSuccess: invalidate,
+  });
+
   const remove = useMutation({
     mutationFn: (job: Job) => deleteJob(job.id),
     onSuccess: invalidate,
@@ -129,5 +136,5 @@ export function useJobMutations({ onDone }: { onDone?: (job: Job) => void } = {}
     onSuccess: invalidate,
   });
 
-  return { create, update, changeStatus, setCosts, remove, undoRemove };
+  return { create, update, changeStatus, setCosts, setChecklist, remove, undoRemove };
 }

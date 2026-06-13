@@ -63,6 +63,16 @@ export function makeJob(ownerId?: string) {
     photoUrls: [],
     estimateId: null,
     invoiceId: null,
+    serviceType: "Insulation",
+    city: "Austin",
+    state: "TX",
+    areaSqft: 1200,
+    scheduledTime: "8–10 AM",
+    siteContactName: "Jane Site",
+    siteContactPhone: "555-0100",
+    referralSource: "Google",
+    crewIds: [],
+    checklist: [],
   };
 }
 

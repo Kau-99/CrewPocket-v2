@@ -30,11 +30,12 @@ import { cn, formatCents } from "@/lib/utils";
 import { useJobs } from "../hooks/use-jobs";
 import { jobStatusSchema, type Job, type JobStatus } from "../schemas";
 import { jobMarginPct, jobTotalCostCents } from "../utils";
-import { JobFormDialog, type ClientOption } from "./job-form-dialog";
+import { JobFormDialog, type ClientOption, type CrewOption } from "./job-form-dialog";
 import { JobStatusBadge } from "./job-status-badge";
 
 interface JobsListProps {
   clientOptions: ClientOption[];
+  crewOptions: CrewOption[];
   /** settings.minMarginPct — margem abaixo disso fica vermelha (SPEC §8). */
   minMarginPct: number;
 }
@@ -45,7 +46,7 @@ function marginOf(job: Job): number {
   return jobMarginPct(job.valueCents, jobTotalCostCents(job));
 }
 
-export function JobsList({ clientOptions, minMarginPct }: JobsListProps) {
+export function JobsList({ clientOptions, crewOptions, minMarginPct }: JobsListProps) {
   const dict = useTranslation();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>(ALL);
@@ -226,7 +227,12 @@ export function JobsList({ clientOptions, minMarginPct }: JobsListProps) {
         </div>
       )}
 
-      <JobFormDialog open={formOpen} onOpenChange={setFormOpen} clientOptions={clientOptions} />
+      <JobFormDialog
+        open={formOpen}
+        onOpenChange={setFormOpen}
+        clientOptions={clientOptions}
+        crewOptions={crewOptions}
+      />
     </div>
   );
 }
