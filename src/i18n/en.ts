@@ -113,6 +113,17 @@ export const en = {
       notes: "Notes",
     },
   },
+  calendar: {
+    title: "Calendar",
+    today: "Today",
+    prev: "Previous month",
+    next: "Next month",
+    scheduled: "Scheduled",
+    deadline: "Deadline",
+    noJobsDay: "No jobs scheduled for this day.",
+    jobsOn: "Jobs on {date}",
+    more: "+{count} more",
+  },
   jobs: {
     title: "Jobs",
     new: "New job",

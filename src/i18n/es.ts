@@ -111,6 +111,17 @@ export const es: Dictionary = {
       notes: "Notas",
     },
   },
+  calendar: {
+    title: "Calendario",
+    today: "Hoy",
+    prev: "Mes anterior",
+    next: "Mes siguiente",
+    scheduled: "Programado",
+    deadline: "Fecha límite",
+    noJobsDay: "No hay trabajos programados para este día.",
+    jobsOn: "Trabajos el {date}",
+    more: "+{count} más",
+  },
   jobs: {
     title: "Trabajos",
     new: "Nuevo trabajo",
