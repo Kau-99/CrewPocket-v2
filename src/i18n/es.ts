@@ -61,6 +61,8 @@ export const es: Dictionary = {
       emailInUse: "Ese correo ya está registrado. Intenta iniciar sesión.",
       weakPassword: "La contraseña es muy débil — usa al menos 6 caracteres.",
       tooManyRequests: "Demasiados intentos. Espera un momento e inténtalo de nuevo.",
+      networkOrConfig:
+        "No pudimos contactar el servicio de inicio de sesión. Abre crewpocket-v2.vercel.app (no un enlace de vista previa) y revisa tu conexión.",
       unknown: "Algo salió mal. Inténtalo de nuevo.",
     },
   },

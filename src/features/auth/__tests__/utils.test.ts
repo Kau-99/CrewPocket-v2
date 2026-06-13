@@ -11,6 +11,8 @@ describe("mapAuthError", () => {
     ["auth/email-already-in-use", "emailInUse"],
     ["auth/weak-password", "weakPassword"],
     ["auth/too-many-requests", "tooManyRequests"],
+    ["auth/unauthorized-domain", "networkOrConfig"],
+    ["auth/network-request-failed", "networkOrConfig"],
     ["auth/some-new-code", "unknown"],
   ])("maps %s → %s", (code, expected) => {
     expect(mapAuthError(new FirebaseError(code, "msg"))).toBe(expected);

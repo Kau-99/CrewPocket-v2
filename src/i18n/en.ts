@@ -63,6 +63,8 @@ export const en = {
       emailInUse: "That email is already registered. Try logging in.",
       weakPassword: "Password is too weak — use at least 6 characters.",
       tooManyRequests: "Too many attempts. Wait a moment and try again.",
+      networkOrConfig:
+        "Couldn't reach the sign-in service. Open crewpocket-v2.vercel.app (not a preview link) and check your connection.",
       unknown: "Something went wrong. Please try again.",
     },
   },

@@ -6,6 +6,7 @@ export type AuthErrorKey =
   | "emailInUse"
   | "weakPassword"
   | "tooManyRequests"
+  | "networkOrConfig"
   | "unknown";
 
 /**
@@ -32,6 +33,11 @@ export function mapAuthError(error: unknown): AuthErrorKey | null {
         return "weakPassword";
       case "auth/too-many-requests":
         return "tooManyRequests";
+      // domínio não autorizado (ex.: URL de deploy específico da Vercel em vez
+      // do domínio canônico) ou rede bloqueada — mensagem acionável, não genérica
+      case "auth/unauthorized-domain":
+      case "auth/network-request-failed":
+        return "networkOrConfig";
       case "auth/popup-closed-by-user":
       case "auth/cancelled-popup-request":
         return null;
