@@ -54,6 +54,8 @@ const FEATURES = [
 const PLANS = [
   {
     name: "Solo",
+    price: "$20",
+    period: "/mo",
     highlight: false,
     description: "For owner-operators running their own jobs.",
     features: [
@@ -65,6 +67,8 @@ const PLANS = [
   },
   {
     name: "Pro",
+    price: "$27",
+    period: "/mo",
     highlight: true,
     description: "For contractors running a crew.",
     features: [
@@ -160,7 +164,7 @@ export default function MarketingPage() {
             14-day free trial on every plan. Cancel anytime.
           </p>
           <div className="mx-auto mt-10 grid max-w-3xl grid-cols-1 gap-6 sm:grid-cols-2">
-            {PLANS.map(({ name, highlight, description, features }) => (
+            {PLANS.map(({ name, price, period, highlight, description, features }) => (
               <Card key={name} className={cn(highlight && "border-primary")}>
                 <CardHeader>
                   <CardTitle className="flex items-center justify-between">
@@ -171,6 +175,10 @@ export default function MarketingPage() {
                       </span>
                     )}
                   </CardTitle>
+                  <p>
+                    <span className="text-3xl font-bold tracking-tight">{price}</span>
+                    <span className="text-sm font-normal text-muted-foreground">{period}</span>
+                  </p>
                   <p className="text-sm text-muted-foreground">{description}</p>
                 </CardHeader>
                 <CardContent>

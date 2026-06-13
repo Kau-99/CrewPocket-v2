@@ -605,6 +605,8 @@ export const es: Dictionary = {
     manage: "Gestionar suscripción",
     monthly: "Mensual",
     annual: "Anual",
+    perMonth: "/mes",
+    perYear: "/año",
     trialNote: "Prueba gratis de 14 días en todos los planes.",
     subscribe: "Comenzar prueba gratis",
     switchPlan: "Cambiar a este plan",

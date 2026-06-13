@@ -605,6 +605,8 @@ export const en = {
     manage: "Manage subscription",
     monthly: "Monthly",
     annual: "Annual",
+    perMonth: "/mo",
+    perYear: "/yr",
     trialNote: "14-day free trial on every plan.",
     subscribe: "Start free trial",
     switchPlan: "Switch to this plan",

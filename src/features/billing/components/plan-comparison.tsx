@@ -10,6 +10,7 @@ import { useTranslation } from "@/hooks/use-translation";
 import { cn } from "@/lib/utils";
 
 import { startCheckout } from "../api";
+import { PLAN_PRICE_USD } from "../prices";
 import type { Interval, Plan } from "../types";
 
 interface PlanComparisonProps {
@@ -63,6 +64,14 @@ export function PlanComparison({ currentPlan = null }: PlanComparisonProps) {
                   <span className="text-xs font-normal text-primary">{dict.billing.current}</span>
                 )}
               </CardTitle>
+              <p className="pt-1">
+                <span className="text-3xl font-bold tracking-tight">
+                  ${PLAN_PRICE_USD[plan][interval]}
+                </span>
+                <span className="text-sm font-normal text-muted-foreground">
+                  {interval === "annual" ? dict.billing.perYear : dict.billing.perMonth}
+                </span>
+              </p>
             </CardHeader>
             <CardContent>
               <ul className="space-y-2 text-sm">
