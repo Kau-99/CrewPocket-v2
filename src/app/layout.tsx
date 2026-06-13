@@ -24,12 +24,22 @@ export const metadata: Metadata = {
     icon: "/icons/icon-192.png",
     apple: "/icons/icon-192.png",
   },
+  // PWA instalável no iOS (Safari não tem prompt; usa Add to Home Screen)
+  appleWebApp: {
+    capable: true,
+    title: "CrewPocket",
+    statusBarStyle: "black-translucent",
+  },
+  // não transformar números em links de telefone (atrapalha valores/ZIP)
+  formatDetection: { telephone: false },
 };
 
 export const viewport: Viewport = {
   themeColor: "#0b0f17",
   width: "device-width",
   initialScale: 1,
+  // ocupa a tela inteira atrás do notch no iOS standalone
+  viewportFit: "cover",
 };
 
 // Tema controlado pelo next-themes (attribute="class", default dark — SPEC §8)

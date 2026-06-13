@@ -122,6 +122,14 @@ export const es: Dictionary = {
     jobsOn: "Trabajos el {date}",
     more: "+{count} más",
   },
+  install: {
+    title: "Instalar CrewPocket",
+    body: "Agrégalo a tu pantalla de inicio para una app más rápida y a pantalla completa.",
+    button: "Instalar app",
+    iosBefore: "Toca",
+    iosAfter: "y luego “Agregar a inicio”.",
+    dismiss: "Cerrar",
+  },
   jobs: {
     title: "Trabajos",
     new: "Nuevo trabajo",

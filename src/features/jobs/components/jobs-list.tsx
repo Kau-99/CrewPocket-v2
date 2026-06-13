@@ -2,7 +2,8 @@
 
 import { Briefcase, Kanban, Plus } from "lucide-react";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -57,6 +58,12 @@ export function JobsList({ clientOptions, crewOptions, minMarginPct }: JobsListP
   useNewShortcut(() => {
     setFormOpen(true);
   });
+
+  // atalho do app (manifest shortcuts): /jobs?new=1 abre o form direto
+  const searchParams = useSearchParams();
+  useEffect(() => {
+    if (searchParams.get("new") === "1") setFormOpen(true);
+  }, [searchParams]);
 
   const allJobs = useMemo(() => data?.pages.flatMap((page) => page.items) ?? [], [data]);
 

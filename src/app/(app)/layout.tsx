@@ -6,6 +6,7 @@ import { useEffect, type ReactNode } from "react";
 import { BottomTabs } from "@/components/shared/bottom-tabs";
 import { CommandPalette } from "@/components/shared/command-palette";
 import { Header } from "@/components/shared/header";
+import { InstallPrompt } from "@/components/shared/install-prompt";
 import { Sidebar } from "@/components/shared/sidebar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Paywall } from "@/features/billing/components/paywall";
@@ -58,6 +59,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       </div>
       <BottomTabs />
       <CommandPalette />
+      <InstallPrompt />
     </div>
   );
 }

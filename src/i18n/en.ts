@@ -124,6 +124,14 @@ export const en = {
     jobsOn: "Jobs on {date}",
     more: "+{count} more",
   },
+  install: {
+    title: "Install CrewPocket",
+    body: "Add it to your home screen for a faster, full-screen app.",
+    button: "Install app",
+    iosBefore: "Tap",
+    iosAfter: "then “Add to Home Screen”.",
+    dismiss: "Dismiss",
+  },
   jobs: {
     title: "Jobs",
     new: "New job",

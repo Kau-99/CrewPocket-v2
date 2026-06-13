@@ -2,8 +2,8 @@
 
 import { FileText, LayoutTemplate, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -61,6 +61,12 @@ export function EstimatesList({ clientOptions, taxPctDefault }: EstimatesListPro
   useNewShortcut(() => {
     setNewOpen(true);
   });
+
+  // atalho do app (manifest shortcuts): /estimates?new=1 abre o dialog direto
+  const searchParams = useSearchParams();
+  useEffect(() => {
+    if (searchParams.get("new") === "1") setNewOpen(true);
+  }, [searchParams]);
   const { create } = useEstimateMutations({
     onCreated: (estimate) => {
       router.push(`/estimates/${estimate.id}`);
