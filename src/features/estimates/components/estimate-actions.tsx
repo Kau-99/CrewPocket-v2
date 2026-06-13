@@ -23,7 +23,7 @@ import { downloadPdf, fillTemplate, openMailto, openPdfPreview } from "@/lib/pdf
 import { formatCents } from "@/lib/utils";
 
 import { useEstimateMutations } from "../hooks/use-estimates";
-import type { Estimate } from "../schemas";
+import { depositDueCents, type Estimate } from "../schemas";
 import { computeEstimateTotals } from "../utils";
 
 interface EstimateActionsProps {
@@ -65,6 +65,16 @@ export function EstimateActions({ estimate, company, clientEmail }: EstimateActi
         }}
         notesLabel={dict.documents.notes}
         notes={estimate.notes}
+        deposit={{
+          label: dict.documents.depositDue,
+          cents: depositDueCents(estimate.depositType, estimate.depositValue, totals.totalCents),
+        }}
+        terms={{ label: dict.documents.terms, value: estimate.terms }}
+        signature={{
+          label: dict.estimates.signature.pdfSignedBy,
+          dataUrl: estimate.signatureDataUrl,
+          name: estimate.signedName,
+        }}
       />
     );
   }

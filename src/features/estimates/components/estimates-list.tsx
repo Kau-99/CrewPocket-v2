@@ -1,6 +1,6 @@
 "use client";
 
-import { FileText, Plus } from "lucide-react";
+import { FileText, LayoutTemplate, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
@@ -23,7 +23,12 @@ import { useNewShortcut } from "@/hooks/use-new-shortcut";
 import { useTranslation } from "@/hooks/use-translation";
 import { formatCents } from "@/lib/utils";
 
-import { useEstimateMutations, useEstimates } from "../hooks/use-estimates";
+import {
+  useEstimateMutations,
+  useEstimates,
+  useEstimateTemplates,
+  useTemplateMutations,
+} from "../hooks/use-estimates";
 import { computeEstimateTotals } from "../utils";
 import { EstimateStatusBadge } from "./estimate-status-badge";
 
@@ -47,9 +52,12 @@ export function EstimatesList({ clientOptions, taxPctDefault }: EstimatesListPro
   const [newOpen, setNewOpen] = useState(false);
   const [newTitle, setNewTitle] = useState("");
   const [newClientId, setNewClientId] = useState(NO_CLIENT);
+  const [templateOpen, setTemplateOpen] = useState(false);
 
   const debouncedSearch = useDebouncedValue(search);
   const { data, isLoading, hasNextPage, fetchNextPage, isFetchingNextPage } = useEstimates();
+  const { data: templateList } = useEstimateTemplates();
+  const { remove: removeTemplate } = useTemplateMutations();
   useNewShortcut(() => {
     setNewOpen(true);
   });
@@ -58,6 +66,24 @@ export function EstimatesList({ clientOptions, taxPctDefault }: EstimatesListPro
       router.push(`/estimates/${estimate.id}`);
     },
   });
+
+  function createFromTemplate(templateId: string) {
+    const template = (templateList ?? []).find((item) => item.id === templateId);
+    if (!template) return;
+    create.mutate(
+      {
+        title: template.title || template.name,
+        clientId: null,
+        clientName: "",
+        taxPct: template.taxPct,
+        discountPct: template.discountPct,
+        notes: template.notes,
+        terms: template.terms,
+        lineItems: template.lineItems.map((item) => ({ ...item, id: crypto.randomUUID() })),
+      },
+      { onError: () => toast.error(dict.errors.offline) },
+    );
+  }
 
   const all = useMemo(() => data?.pages.flatMap((page) => page.items) ?? [], [data]);
   const visible = useMemo(() => {
@@ -91,6 +117,8 @@ export function EstimatesList({ clientOptions, taxPctDefault }: EstimatesListPro
             description: dict.estimates.defaultLineItem,
             qty: 1,
             unitPriceCents: 0,
+            unit: "",
+            note: "",
           },
         ],
       },
@@ -105,15 +133,25 @@ export function EstimatesList({ clientOptions, taxPctDefault }: EstimatesListPro
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-3">
         <h1 className="text-2xl font-semibold">{dict.estimates.title}</h1>
-        <Button
-          className="ml-auto"
-          onClick={() => {
-            setNewOpen(true);
-          }}
-        >
-          <Plus className="mr-1 size-4" aria-hidden="true" />
-          {dict.estimates.new}
-        </Button>
+        <div className="ml-auto flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => {
+              setTemplateOpen(true);
+            }}
+          >
+            <LayoutTemplate className="mr-1 size-4" aria-hidden="true" />
+            {dict.estimates.templates.newFrom}
+          </Button>
+          <Button
+            onClick={() => {
+              setNewOpen(true);
+            }}
+          >
+            <Plus className="mr-1 size-4" aria-hidden="true" />
+            {dict.estimates.new}
+          </Button>
+        </div>
       </div>
 
       <Input
@@ -227,6 +265,53 @@ export function EstimatesList({ clientOptions, taxPctDefault }: EstimatesListPro
               </Button>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={templateOpen} onOpenChange={setTemplateOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{dict.estimates.templates.pick}</DialogTitle>
+          </DialogHeader>
+          {(templateList ?? []).length === 0 ? (
+            <p className="py-4 text-center text-sm text-muted-foreground">
+              {dict.estimates.templates.none}
+            </p>
+          ) : (
+            <ul className="divide-y rounded-lg border">
+              {(templateList ?? []).map((template) => (
+                <li key={template.id} className="flex items-center gap-2 p-3">
+                  <button
+                    type="button"
+                    className="min-w-0 flex-1 text-left hover:underline"
+                    disabled={create.isPending}
+                    onClick={() => {
+                      setTemplateOpen(false);
+                      createFromTemplate(template.id);
+                    }}
+                  >
+                    <span className="font-medium">{template.name}</span>
+                    <span className="block truncate text-xs text-muted-foreground">
+                      {template.lineItems.length} · {template.title || "—"}
+                    </span>
+                  </button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    aria-label={dict.common.delete}
+                    onClick={() => {
+                      removeTemplate.mutate(template.id, {
+                        onSuccess: () => toast.success(dict.estimates.templates.deletedToast),
+                        onError: () => toast.error(dict.errors.unknown),
+                      });
+                    }}
+                  >
+                    <Trash2 className="size-4 text-destructive" aria-hidden="true" />
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          )}
         </DialogContent>
       </Dialog>
     </div>

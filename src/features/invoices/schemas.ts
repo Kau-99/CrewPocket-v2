@@ -9,6 +9,8 @@ export const invoiceLineItemSchema = z.object({
   description: z.string().min(1).max(300),
   qty: z.number().min(0).max(1_000_000),
   unitPriceCents: z.number().int().min(0),
+  unit: z.string().max(20).default(""),
+  note: z.string().max(300).default(""),
 });
 
 export const invoiceStatusSchema = z.enum(["draft", "sent", "paid", "overdue", "void"]);

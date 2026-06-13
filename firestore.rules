@@ -96,7 +96,25 @@ service cloud.firestore {
         && d.discountPct is number && d.discountPct >= 0 && d.discountPct <= 100
         && d.taxPct is number && d.taxPct >= 0 && d.taxPct <= 30
         && d.notes is string && d.notes.size() <= 5000
-        && d.validUntil is timestamp;
+        && d.validUntil is timestamp
+        // termos, depósito e assinatura — opcionais p/ compat
+        && (!('terms' in d) || (d.terms is string && d.terms.size() <= 5000))
+        && (!('depositType' in d) || d.depositType in ['none', 'fixed', 'percent'])
+        && (!('depositValue' in d) || (d.depositValue is number && d.depositValue >= 0))
+        && (!('signatureDataUrl' in d) || (d.signatureDataUrl is string && d.signatureDataUrl.size() <= 400000))
+        && (!('signedName' in d) || (d.signedName is string && d.signedName.size() <= 120))
+        && (!('signedAt' in d) || d.signedAt == null || d.signedAt is timestamp);
+    }
+
+    function validEstimateTemplate() {
+      let d = request.resource.data;
+      return d.name is string && d.name.size() >= 1 && d.name.size() <= 120
+        && d.title is string && d.title.size() <= 200
+        && d.lineItems is list && d.lineItems.size() <= 100
+        && d.discountPct is number && d.discountPct >= 0 && d.discountPct <= 100
+        && d.taxPct is number && d.taxPct >= 0 && d.taxPct <= 30
+        && d.notes is string && d.notes.size() <= 5000
+        && d.terms is string && d.terms.size() <= 5000;
     }
 
     function validInvoice() {
@@ -223,6 +241,12 @@ service cloud.firestore {
       allow read, delete: if ownsExisting();
       allow create: if ownsIncoming() && validBase() && validEstimate();
       allow update: if ownsExisting() && immutableBase() && validBase() && validEstimate();
+    }
+
+    match /estimateTemplates/{docId} {
+      allow read, delete: if ownsExisting();
+      allow create: if ownsIncoming() && validBase() && validEstimateTemplate();
+      allow update: if ownsExisting() && immutableBase() && validBase() && validEstimateTemplate();
     }
 
     match /invoices/{docId} {

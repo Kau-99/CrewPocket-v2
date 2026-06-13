@@ -79,7 +79,8 @@ test("estimate → PDF → convert to job", async ({ page, browserName }) => {
 
   // edita o line item e salva — totais ao vivo
   await page.getByLabel("Unit price").first().fill("500.00");
-  await page.getByRole("button", { name: "Save" }).click();
+  // "Save" exato: a tela agora também tem "Save as template"
+  await page.getByRole("button", { name: "Save", exact: true }).click();
   await expect(page.getByText("Saved")).toBeVisible({ timeout: 10_000 });
 
   // PDF real via blob (ADR-020)

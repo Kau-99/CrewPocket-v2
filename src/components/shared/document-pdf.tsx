@@ -21,6 +21,8 @@ export interface PdfLine {
   description: string;
   qty: number;
   unitPriceCents: number;
+  unit?: string;
+  note?: string;
 }
 
 export interface DocumentPdfProps {
@@ -37,6 +39,10 @@ export interface DocumentPdfProps {
   totalsLabels: { subtotal: string; discount: string; tax: string; total: string };
   notesLabel: string;
   notes: string;
+  /** Opcionais (estimate): depósito devido, termos, assinatura. */
+  deposit?: { label: string; cents: number };
+  terms?: { label: string; value: string };
+  signature?: { label: string; dataUrl: string; name: string };
 }
 
 const styles = StyleSheet.create({
@@ -81,6 +87,9 @@ const styles = StyleSheet.create({
   },
   notes: { marginTop: 24, color: "#374151", lineHeight: 1.4 },
   notesLabel: { fontFamily: "Helvetica-Bold", marginBottom: 4 },
+  lineNote: { fontSize: 8, color: "#6b7280", marginTop: 1 },
+  signature: { marginTop: 24 },
+  signatureImg: { width: 180, height: 60, objectFit: "contain", marginTop: 4 },
 });
 
 export function DocumentPdf(props: DocumentPdfProps) {
@@ -125,8 +134,11 @@ export function DocumentPdf(props: DocumentPdfProps) {
           </View>
           {props.lines.map((line) => (
             <View key={line.id} style={styles.row}>
-              <Text style={styles.colDescription}>{line.description}</Text>
-              <Text style={styles.colQty}>{line.qty}</Text>
+              <View style={styles.colDescription}>
+                <Text>{line.description}</Text>
+                {line.note ? <Text style={styles.lineNote}>{line.note}</Text> : null}
+              </View>
+              <Text style={styles.colQty}>{line.unit ? `${line.qty} ${line.unit}` : line.qty}</Text>
               <Text style={styles.colPrice}>{formatCents(line.unitPriceCents)}</Text>
               <Text style={styles.colTotal}>
                 {formatCents(Math.round(line.qty * line.unitPriceCents))}
@@ -154,12 +166,34 @@ export function DocumentPdf(props: DocumentPdfProps) {
             <Text>{totalsLabels.total}</Text>
             <Text>{formatCents(totals.totalCents)}</Text>
           </View>
+          {props.deposit && props.deposit.cents > 0 ? (
+            <View style={styles.totalsRow}>
+              <Text>{props.deposit.label}</Text>
+              <Text>{formatCents(props.deposit.cents)}</Text>
+            </View>
+          ) : null}
         </View>
+
+        {props.terms?.value ? (
+          <View style={styles.notes}>
+            <Text style={styles.notesLabel}>{props.terms.label}</Text>
+            <Text>{props.terms.value}</Text>
+          </View>
+        ) : null}
 
         {props.notes ? (
           <View style={styles.notes}>
             <Text style={styles.notesLabel}>{props.notesLabel}</Text>
             <Text>{props.notes}</Text>
+          </View>
+        ) : null}
+
+        {props.signature?.dataUrl ? (
+          <View style={styles.signature}>
+            <Text style={styles.notesLabel}>{props.signature.label}</Text>
+            {/* eslint-disable-next-line jsx-a11y/alt-text -- Image do react-pdf não aceita alt */}
+            <Image src={props.signature.dataUrl} style={styles.signatureImg} />
+            {props.signature.name ? <Text>{props.signature.name}</Text> : null}
           </View>
         ) : null}
       </Page>

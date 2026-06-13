@@ -82,6 +82,8 @@ export function makeLineItem() {
     description: "R-38 blow-in, 1200 sqft",
     qty: 1,
     unitPriceCents: 185_000,
+    unit: "sqft",
+    note: "",
   };
 }
 
@@ -102,6 +104,25 @@ export function makeEstimate(ownerId?: string) {
     acceptedAt: null,
     declinedAt: null,
     convertedJobId: null,
+    terms: "Net 30. 1-year workmanship warranty.",
+    depositType: "percent" as const,
+    depositValue: 25,
+    signatureDataUrl: "",
+    signedName: "",
+    signedAt: null,
+  };
+}
+
+export function makeEstimateTemplate(ownerId?: string) {
+  return {
+    ...makeBase(ownerId),
+    name: "Attic package",
+    title: "Attic insulation",
+    lineItems: [makeLineItem()],
+    discountPct: 0,
+    taxPct: 8.25,
+    notes: "",
+    terms: "Net 30.",
   };
 }
 

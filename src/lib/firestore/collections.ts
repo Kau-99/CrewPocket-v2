@@ -11,6 +11,7 @@ export const COLLECTIONS = {
   clients: "clients",
   jobs: "jobs",
   estimates: "estimates",
+  estimateTemplates: "estimateTemplates",
   invoices: "invoices",
   crewMembers: "crewMembers",
   timeLogs: "timeLogs",

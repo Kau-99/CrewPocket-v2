@@ -43,6 +43,8 @@ export default function AtticEstimatorPage() {
             }),
             qty: result.bags,
             unitPriceCents: result.bagCostCents,
+            unit: "",
+            note: "",
           },
           {
             id: crypto.randomUUID(),
@@ -51,6 +53,8 @@ export default function AtticEstimatorPage() {
             }),
             qty: 1,
             unitPriceCents: result.laborCents,
+            unit: "",
+            note: "",
           },
         ],
       },

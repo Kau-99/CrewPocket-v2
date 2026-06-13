@@ -23,12 +23,19 @@ import { newEntityBase } from "@/lib/firestore/schema-helpers";
 import { subscribeDocWithRetry } from "@/lib/firestore/subscribe";
 import { commitWrite } from "@/lib/firestore/write";
 
-import { estimateSchema, type Estimate, type LineItem } from "./schemas";
+import {
+  estimateSchema,
+  estimateTemplateSchema,
+  type Estimate,
+  type EstimateTemplate,
+  type LineItem,
+} from "./schemas";
 import { computeEstimateTotals, effectiveEstimateStatus } from "./utils";
 
 export const PAGE_SIZE = 25;
 
 const converter = createConverter(COLLECTIONS.estimates, estimateSchema);
+const templateConverter = createConverter(COLLECTIONS.estimateTemplates, estimateTemplateSchema);
 
 export type PageCursor = QueryDocumentSnapshot<unknown>;
 
@@ -117,6 +124,10 @@ export interface NewEstimateInput {
   clientName: string;
   taxPct: number;
   lineItems: LineItem[];
+  /** Vindos de um template (opcionais). */
+  discountPct?: number;
+  notes?: string;
+  terms?: string;
 }
 
 /** Criação numerada: contador transacional em settings (exige rede, ADR-018). */
@@ -130,9 +141,10 @@ export async function createEstimate(uid: string, input: NewEstimateInput): Prom
     title: input.title,
     status: "draft",
     lineItems: input.lineItems,
-    discountPct: 0,
+    discountPct: input.discountPct ?? 0,
     taxPct: input.taxPct,
-    notes: "",
+    notes: input.notes ?? "",
+    terms: input.terms ?? "",
     validUntil: Timestamp.fromMillis(Date.now() + 30 * 86_400_000),
     sentAt: null,
     acceptedAt: null,
@@ -141,6 +153,50 @@ export async function createEstimate(uid: string, input: NewEstimateInput): Prom
   });
   await setDoc(doc(db, COLLECTIONS.estimates, estimate.id), estimate);
   return estimate;
+}
+
+// ── Templates reutilizáveis (SPEC §8) ──
+
+export interface NewTemplateInput {
+  name: string;
+  title: string;
+  lineItems: LineItem[];
+  discountPct: number;
+  taxPct: number;
+  notes: string;
+  terms: string;
+}
+
+export async function fetchTemplates(uid: string): Promise<EstimateTemplate[]> {
+  const snapshot = await getDocs(
+    query(
+      collection(db, COLLECTIONS.estimateTemplates).withConverter(templateConverter),
+      where("ownerId", "==", uid),
+    ),
+  );
+  return snapshot.docs
+    .map((docSnap) => docSnap.data())
+    .filter(isNotNull)
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+export function createTemplate(uid: string, input: NewTemplateInput): Promise<EstimateTemplate> {
+  const template = estimateTemplateSchema.parse({ ...newEntityBase(uid), ...input });
+  commitWrite(setDoc(doc(db, COLLECTIONS.estimateTemplates, template.id), template), {
+    collection: COLLECTIONS.estimateTemplates,
+    docId: template.id,
+    op: "set",
+  });
+  return Promise.resolve(template);
+}
+
+export function deleteTemplate(id: string): Promise<void> {
+  commitWrite(deleteDoc(doc(db, COLLECTIONS.estimateTemplates, id)), {
+    collection: COLLECTIONS.estimateTemplates,
+    docId: id,
+    op: "delete",
+  });
+  return Promise.resolve();
 }
 
 export function updateEstimate(

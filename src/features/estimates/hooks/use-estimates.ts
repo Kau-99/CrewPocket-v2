@@ -8,9 +8,12 @@ import { useAuth } from "@/hooks/use-auth";
 import {
   convertEstimateToJob,
   createEstimate,
+  createTemplate,
   deleteEstimate,
+  deleteTemplate,
   fetchAllEstimates,
   fetchEstimatesPage,
+  fetchTemplates,
   markEstimateAccepted,
   markEstimateDeclined,
   markEstimateSent,
@@ -19,11 +22,47 @@ import {
   updateEstimate,
   type EstimatesPage,
   type NewEstimateInput,
+  type NewTemplateInput,
   type PageCursor,
 } from "../api";
 import type { Estimate } from "../schemas";
 
 const KEY = "estimates";
+const TEMPLATES_KEY = "estimateTemplates";
+
+export function useEstimateTemplates() {
+  const { user } = useAuth();
+  const uid = user?.uid;
+
+  return useQuery({
+    queryKey: [TEMPLATES_KEY, uid],
+    enabled: Boolean(uid),
+    queryFn: () => (uid ? fetchTemplates(uid) : Promise.resolve([])),
+  });
+}
+
+export function useTemplateMutations() {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const invalidate = () => {
+    void queryClient.invalidateQueries({ queryKey: [TEMPLATES_KEY] });
+  };
+
+  const create = useMutation({
+    mutationFn: (input: NewTemplateInput) => {
+      if (!user) throw new Error("not authenticated");
+      return createTemplate(user.uid, input);
+    },
+    onSuccess: invalidate,
+  });
+
+  const remove = useMutation({
+    mutationFn: (id: string) => deleteTemplate(id),
+    onSuccess: invalidate,
+  });
+
+  return { create, remove };
+}
 
 export function useEstimates() {
   const { user } = useAuth();
