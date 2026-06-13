@@ -28,6 +28,9 @@ export default function EstimateDetailPage({ params }: { params: { id: string } 
         phone: settings?.companyPhone ?? "",
         email: settings?.companyEmail ?? "",
         logoUrl: settings?.logoUrl ?? null,
+        website: settings?.website ?? "",
+        taxId: settings?.taxId ?? "",
+        licenseNumber: settings?.licenseNumber ?? "",
       }}
     />
   );

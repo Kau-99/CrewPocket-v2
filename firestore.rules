@@ -202,7 +202,13 @@ service cloud.firestore {
         && d.defaultLaborRateCents is int && d.defaultLaborRateCents >= 0
         && d.mileageRateCents is int && d.mileageRateCents >= 0
         && d.minMarginPct is number && d.minMarginPct >= 0 && d.minMarginPct <= 100
-        && d.taxPctDefault is number && d.taxPctDefault >= 0 && d.taxPctDefault <= 30;
+        && d.taxPctDefault is number && d.taxPctDefault >= 0 && d.taxPctDefault <= 30
+        // dados de negócio + padrões de documento — opcionais p/ compat
+        && (!('taxId' in d) || (d.taxId is string && d.taxId.size() <= 40))
+        && (!('licenseNumber' in d) || (d.licenseNumber is string && d.licenseNumber.size() <= 60))
+        && (!('website' in d) || (d.website is string && d.website.size() <= 120))
+        && (!('defaultEstimateTerms' in d) || (d.defaultEstimateTerms is string && d.defaultEstimateTerms.size() <= 5000))
+        && (!('paymentInstructions' in d) || (d.paymentInstructions is string && d.paymentInstructions.size() <= 2000));
     }
 
     match /settings/{uid} {

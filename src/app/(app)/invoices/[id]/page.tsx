@@ -21,12 +21,16 @@ export default function InvoiceDetailPage({ params }: { params: { id: string } }
     <InvoiceDetail
       id={params.id}
       clientEmail={clientEmail}
+      paymentInstructions={settings?.paymentInstructions ?? ""}
       company={{
         name: settings?.companyName ?? "",
         address: settings?.companyAddress ?? "",
         phone: settings?.companyPhone ?? "",
         email: settings?.companyEmail ?? "",
         logoUrl: settings?.logoUrl ?? null,
+        website: settings?.website ?? "",
+        taxId: settings?.taxId ?? "",
+        licenseNumber: settings?.licenseNumber ?? "",
       }}
     />
   );

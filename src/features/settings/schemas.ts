@@ -17,6 +17,13 @@ export const settingsSchema = z.object({
   mileageRateCents: z.number().int().default(67),
   minMarginPct: z.number().min(0).max(100).default(20),
   taxPctDefault: z.number().min(0).max(30).default(0),
+  // ── dados de negócio (aparecem nos documentos) ──
+  taxId: z.string().max(40).default(""),
+  licenseNumber: z.string().max(60).default(""),
+  website: z.string().max(120).default(""),
+  // ── padrões de documento ──
+  defaultEstimateTerms: z.string().max(5000).default(""),
+  paymentInstructions: z.string().max(2000).default(""),
 });
 
 export type Settings = z.infer<typeof settingsSchema>;

@@ -1,4 +1,14 @@
-import { BarChart3, Check, ClipboardList, Clock, FileText, Users, WifiOff } from "lucide-react";
+import {
+  BarChart3,
+  Check,
+  ClipboardList,
+  Clock,
+  FileText,
+  Smartphone,
+  Users,
+  WifiOff,
+} from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
@@ -71,7 +81,8 @@ export default function MarketingPage() {
     <div className="flex min-h-dvh flex-col">
       <header className="sticky top-0 z-10 border-b bg-background/80 backdrop-blur">
         <div className="mx-auto flex h-14 w-full max-w-5xl items-center justify-between px-4">
-          <span className="text-lg font-bold tracking-tight">
+          <span className="flex items-center gap-2 text-lg font-bold tracking-tight">
+            <Image src="/icons/icon-192.png" alt="" width={28} height={28} className="rounded-md" />
             Crew<span className="text-primary">Pocket</span>
           </span>
           <nav className="flex items-center gap-2">
@@ -88,6 +99,9 @@ export default function MarketingPage() {
       <main className="flex-1">
         {/* hero */}
         <section className="mx-auto w-full max-w-5xl px-4 py-16 text-center sm:py-24">
+          <span className="mb-5 inline-block rounded-full border bg-muted/40 px-3 py-1 text-xs font-medium text-muted-foreground">
+            Field service management for contractors
+          </span>
           <h1 className="mx-auto max-w-3xl text-balance text-4xl font-bold tracking-tight sm:text-5xl">
             Run your contracting business from your <span className="text-primary">pocket</span>
           </h1>
@@ -103,7 +117,20 @@ export default function MarketingPage() {
               <Link href="/login">Log in</Link>
             </Button>
           </div>
-          <p className="mt-3 text-xs text-muted-foreground">No credit card to sign up.</p>
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-muted-foreground">
+            <span className="flex items-center gap-1.5">
+              <Check className="size-3.5 text-primary" aria-hidden="true" />
+              No credit card to sign up
+            </span>
+            <span className="flex items-center gap-1.5">
+              <WifiOff className="size-3.5 text-primary" aria-hidden="true" />
+              Works offline
+            </span>
+            <span className="flex items-center gap-1.5">
+              <Smartphone className="size-3.5 text-primary" aria-hidden="true" />
+              Installs on any phone
+            </span>
+          </div>
         </section>
 
         {/* features */}

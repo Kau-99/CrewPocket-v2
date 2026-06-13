@@ -14,6 +14,9 @@ export interface CompanyInfo {
   phone: string;
   email: string;
   logoUrl: string | null;
+  website?: string;
+  taxId?: string;
+  licenseNumber?: string;
 }
 
 export interface PdfLine {
@@ -43,6 +46,8 @@ export interface DocumentPdfProps {
   deposit?: { label: string; cents: number };
   terms?: { label: string; value: string };
   signature?: { label: string; dataUrl: string; name: string };
+  /** Opcional (invoice): instruções de pagamento. */
+  payment?: { label: string; value: string };
 }
 
 const styles = StyleSheet.create({
@@ -52,6 +57,7 @@ const styles = StyleSheet.create({
   number: { fontSize: 12, color: "#6b7280", marginTop: 4 },
   company: { textAlign: "right", lineHeight: 1.4 },
   companyName: { fontSize: 12, fontFamily: "Helvetica-Bold" },
+  companyMeta: { fontSize: 8, color: "#6b7280" },
   logo: { width: 64, height: 64, objectFit: "contain", marginBottom: 6, alignSelf: "flex-end" },
   metaRow: { flexDirection: "row", gap: 32, marginBottom: 16 },
   metaLabel: { color: "#6b7280", marginBottom: 2 },
@@ -111,6 +117,11 @@ export function DocumentPdf(props: DocumentPdfProps) {
             {company.address ? <Text>{company.address}</Text> : null}
             {company.phone ? <Text>{company.phone}</Text> : null}
             {company.email ? <Text>{company.email}</Text> : null}
+            {company.website ? <Text>{company.website}</Text> : null}
+            {company.taxId ? <Text style={styles.companyMeta}>{company.taxId}</Text> : null}
+            {company.licenseNumber ? (
+              <Text style={styles.companyMeta}>{company.licenseNumber}</Text>
+            ) : null}
           </View>
         </View>
 
@@ -185,6 +196,13 @@ export function DocumentPdf(props: DocumentPdfProps) {
           <View style={styles.notes}>
             <Text style={styles.notesLabel}>{props.notesLabel}</Text>
             <Text>{props.notes}</Text>
+          </View>
+        ) : null}
+
+        {props.payment?.value ? (
+          <View style={styles.notes}>
+            <Text style={styles.notesLabel}>{props.payment.label}</Text>
+            <Text>{props.payment.value}</Text>
           </View>
         ) : null}
 

@@ -5,6 +5,8 @@ import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
+import { Download } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,10 +17,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/hooks/use-auth";
 import { useTranslation } from "@/hooks/use-translation";
 import { useUiStore } from "@/hooks/use-ui-store";
 import { storage } from "@/lib/firebase/client";
+import { exportAllData, downloadBlob } from "@/lib/export-data";
 import { compressToWebP } from "@/lib/image";
 import { centsToDollarsString, dollarsToCents } from "@/lib/utils";
 
@@ -63,9 +67,15 @@ export function SettingsForm({ settings }: { settings: Settings }) {
     laborRate: centsToDollarsString(settings.defaultLaborRateCents),
     mileageRate: String(settings.mileageRateCents),
     minMarginPct: String(settings.minMarginPct),
+    taxId: settings.taxId,
+    licenseNumber: settings.licenseNumber,
+    website: settings.website,
+    defaultEstimateTerms: settings.defaultEstimateTerms,
+    paymentInstructions: settings.paymentInstructions,
   });
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     // realinha quando o doc muda por fora (outra aba)
@@ -139,12 +149,30 @@ export function SettingsForm({ settings }: { settings: Settings }) {
       defaultLaborRateCents: laborRateCents,
       mileageRateCents,
       minMarginPct,
+      taxId: draft.taxId.trim(),
+      licenseNumber: draft.licenseNumber.trim(),
+      website: draft.website.trim(),
+      defaultEstimateTerms: draft.defaultEstimateTerms,
+      paymentInstructions: draft.paymentInstructions,
     })
       .then(() => toast.success(dict.settings.savedToast))
       .catch(() => toast.error(dict.errors.validation))
       .finally(() => {
         setSaving(false);
       });
+  }
+
+  async function handleExport() {
+    if (!user) return;
+    setExporting(true);
+    try {
+      const blob = await exportAllData(user.uid);
+      downloadBlob(blob, `crewpocket-export-${new Date().toISOString().slice(0, 10)}.json`);
+    } catch {
+      toast.error(dict.errors.unknown);
+    } finally {
+      setExporting(false);
+    }
   }
 
   return (
@@ -281,6 +309,67 @@ export function SettingsForm({ settings }: { settings: Settings }) {
         </div>
       </Section>
 
+      <Section title={dict.settings.businessSection}>
+        <p className="text-xs text-muted-foreground">{dict.settings.businessHint}</p>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <Field id="set-taxid" label={dict.settings.taxId}>
+            <Input
+              id="set-taxid"
+              value={draft.taxId}
+              onChange={(event) => {
+                patch({ taxId: event.target.value });
+              }}
+            />
+          </Field>
+          <Field id="set-license" label={dict.settings.licenseNumber}>
+            <Input
+              id="set-license"
+              value={draft.licenseNumber}
+              onChange={(event) => {
+                patch({ licenseNumber: event.target.value });
+              }}
+            />
+          </Field>
+          <Field id="set-website" label={dict.settings.website}>
+            <Input
+              id="set-website"
+              type="url"
+              placeholder="https://"
+              value={draft.website}
+              onChange={(event) => {
+                patch({ website: event.target.value });
+              }}
+            />
+          </Field>
+        </div>
+      </Section>
+
+      <Section title={dict.settings.documentDefaultsSection}>
+        <p className="text-xs text-muted-foreground">{dict.settings.documentDefaultsHint}</p>
+        <Field id="set-terms" label={dict.settings.defaultEstimateTerms}>
+          <Textarea
+            id="set-terms"
+            rows={3}
+            value={draft.defaultEstimateTerms}
+            placeholder={dict.documents.termsPlaceholder}
+            onChange={(event) => {
+              patch({ defaultEstimateTerms: event.target.value });
+            }}
+          />
+        </Field>
+        <Field id="set-payinfo" label={dict.settings.paymentInstructions}>
+          <Textarea
+            id="set-payinfo"
+            rows={2}
+            value={draft.paymentInstructions}
+            placeholder={dict.settings.paymentInstructionsPlaceholder}
+            onChange={(event) => {
+              patch({ paymentInstructions: event.target.value });
+            }}
+          />
+        </Field>
+      </Section>
+
       <Section title={dict.settings.invoiceSection}>
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           <Field id="set-prefix" label={dict.settings.invoicePrefix}>
@@ -363,6 +452,19 @@ export function SettingsForm({ settings }: { settings: Settings }) {
       <Button onClick={handleSave} disabled={saving}>
         {saving ? dict.common.loading : dict.common.save}
       </Button>
+
+      <Section title={dict.settings.dataSection}>
+        <p className="text-xs text-muted-foreground">{dict.settings.dataHint}</p>
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={exporting}
+          onClick={() => void handleExport()}
+        >
+          <Download className="mr-1 size-4" aria-hidden="true" />
+          {exporting ? dict.common.loading : dict.settings.exportData}
+        </Button>
+      </Section>
     </div>
   );
 }

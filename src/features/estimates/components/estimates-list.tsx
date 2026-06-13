@@ -41,11 +41,13 @@ interface EstimatesListProps {
   clientOptions: ClientOption[];
   /** settings.taxPctDefault — aplicado em estimates novos. */
   taxPctDefault: number;
+  /** settings.defaultEstimateTerms — pré-preenche estimates novos. */
+  defaultTerms: string;
 }
 
 const NO_CLIENT = "none";
 
-export function EstimatesList({ clientOptions, taxPctDefault }: EstimatesListProps) {
+export function EstimatesList({ clientOptions, taxPctDefault, defaultTerms }: EstimatesListProps) {
   const dict = useTranslation();
   const router = useRouter();
   const [search, setSearch] = useState("");
@@ -117,6 +119,7 @@ export function EstimatesList({ clientOptions, taxPctDefault }: EstimatesListPro
             ? ""
             : (clientOptions.find((option) => option.id === newClientId)?.name ?? ""),
         taxPct: taxPctDefault,
+        terms: defaultTerms,
         lineItems: [
           {
             id: crypto.randomUUID(),

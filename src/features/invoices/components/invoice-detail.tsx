@@ -30,9 +30,16 @@ interface InvoiceDetailProps {
   company: CompanyInfo;
   /** email do cliente para o mailto, resolvido pela página */
   clientEmail: string | null;
+  /** instruções de pagamento (settings) — vão no PDF */
+  paymentInstructions: string;
 }
 
-export function InvoiceDetail({ id, company, clientEmail }: InvoiceDetailProps) {
+export function InvoiceDetail({
+  id,
+  company,
+  clientEmail,
+  paymentInstructions,
+}: InvoiceDetailProps) {
   const dict = useTranslation();
   const { invoice, loading } = useInvoice(id);
   const { update } = useInvoiceMutations();
@@ -118,7 +125,12 @@ export function InvoiceDetail({ id, company, clientEmail }: InvoiceDetailProps) 
         )}
       </div>
 
-      <InvoiceActions invoice={invoice} company={company} clientEmail={clientEmail} />
+      <InvoiceActions
+        invoice={invoice}
+        company={company}
+        clientEmail={clientEmail}
+        paymentInstructions={paymentInstructions}
+      />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div className="space-y-1.5">

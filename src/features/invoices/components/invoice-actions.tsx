@@ -30,9 +30,15 @@ interface InvoiceActionsProps {
   invoice: Invoice;
   company: CompanyInfo;
   clientEmail: string | null;
+  paymentInstructions: string;
 }
 
-export function InvoiceActions({ invoice, company, clientEmail }: InvoiceActionsProps) {
+export function InvoiceActions({
+  invoice,
+  company,
+  clientEmail,
+  paymentInstructions,
+}: InvoiceActionsProps) {
   const dict = useTranslation();
   const router = useRouter();
   const { send, markPaid, voidIt, remove, undoRemove } = useInvoiceMutations();
@@ -65,6 +71,7 @@ export function InvoiceActions({ invoice, company, clientEmail }: InvoiceActions
         }}
         notesLabel={dict.documents.notes}
         notes={invoice.notes}
+        payment={{ label: dict.settings.paymentInstructions, value: paymentInstructions }}
       />
     );
   }

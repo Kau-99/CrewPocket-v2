@@ -19,6 +19,10 @@ export default function EstimatesPage() {
   );
 
   return (
-    <EstimatesList clientOptions={clientOptions} taxPctDefault={settings?.taxPctDefault ?? 0} />
+    <EstimatesList
+      clientOptions={clientOptions}
+      taxPctDefault={settings?.taxPctDefault ?? 0}
+      defaultTerms={settings?.defaultEstimateTerms ?? ""}
+    />
   );
 }
