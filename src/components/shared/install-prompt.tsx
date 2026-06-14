@@ -80,33 +80,39 @@ export function InstallPrompt() {
   if (!show) return null;
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-50 p-3 pb-20 md:bottom-3 md:left-auto md:right-3 md:w-96 md:p-0">
-      <div className="flex items-start gap-3 rounded-xl border bg-card p-4 shadow-lg">
-        <div className="rounded-lg bg-primary/10 p-2 text-primary">
-          <Download className="size-5" aria-hidden="true" />
-        </div>
+    // `translate="no"`/`notranslate`: o tradutor do navegador (ex.: Google
+    // Translate) reescreve nós de texto e briga com o React, blankando o card
+    // (vira um retângulo cinza). Marcar o widget como não-traduzível mantém o
+    // DOM estável — o texto de marca ("Install") fica curto e legível.
+    <div
+      translate="no"
+      className="notranslate fixed inset-x-2 bottom-[calc(env(safe-area-inset-bottom)+4.25rem)] z-50 md:inset-x-auto md:bottom-4 md:right-4 md:w-80"
+    >
+      <div className="flex items-center gap-3 rounded-xl border bg-card/95 p-2.5 shadow-lg backdrop-blur supports-[backdrop-filter]:bg-card/80">
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+          <Download className="size-[18px]" aria-hidden="true" />
+        </span>
         <div className="min-w-0 flex-1">
-          <p className="font-semibold">{t.title}</p>
+          <p className="truncate text-sm font-semibold leading-tight">{t.title}</p>
           {ios ? (
-            <p className="mt-0.5 flex flex-wrap items-center gap-1 text-sm text-muted-foreground">
+            <p className="mt-0.5 flex flex-wrap items-center gap-1 text-xs leading-tight text-muted-foreground">
               {t.iosBefore}
-              <Share className="inline size-4" aria-hidden="true" />
+              <Share className="inline size-3.5" aria-hidden="true" />
               {t.iosAfter}
             </p>
           ) : (
-            <p className="mt-0.5 text-sm text-muted-foreground">{t.body}</p>
-          )}
-          {!ios && (
-            <Button size="sm" className="mt-2" onClick={() => void install()}>
-              <Download className="mr-1 size-4" aria-hidden="true" />
-              {t.button}
-            </Button>
+            <p className="mt-0.5 truncate text-xs leading-tight text-muted-foreground">{t.body}</p>
           )}
         </div>
+        {!ios && (
+          <Button size="sm" className="h-8 shrink-0 px-3" onClick={() => void install()}>
+            {t.button}
+          </Button>
+        )}
         <button
           type="button"
           onClick={dismiss}
-          className="text-muted-foreground hover:text-foreground"
+          className="shrink-0 rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
           aria-label={t.dismiss}
         >
           <X className="size-4" aria-hidden="true" />
