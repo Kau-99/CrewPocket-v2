@@ -123,7 +123,7 @@ describe("customers e processedEvents (lockdown total)", () => {
 
 describe("settings/{uid}", () => {
   it("dono cria/lê/atualiza; outro usuário não; delete proibido", async () => {
-    const settings = buildDefaultSettings("Acme");
+    const settings = buildDefaultSettings("Acme", "insulation");
     const ownRef = doc(asUser(OWNER), "settings", OWNER);
     await assertSucceeds(setDoc(ownRef, settings));
     await assertSucceeds(getDoc(ownRef));
@@ -135,7 +135,7 @@ describe("settings/{uid}", () => {
   });
 
   it("rejeita language/contadores inválidos", async () => {
-    const settings = buildDefaultSettings("Acme");
+    const settings = buildDefaultSettings("Acme", "insulation");
     const ownRef = doc(asUser(OWNER), "settings", OWNER);
     await assertFails(setDoc(ownRef, { ...settings, language: "pt" }));
     await assertFails(setDoc(ownRef, { ...settings, invoiceCounter: 0 }));

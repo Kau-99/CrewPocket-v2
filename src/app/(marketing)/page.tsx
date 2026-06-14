@@ -104,7 +104,7 @@ export default function MarketingPage() {
         {/* hero */}
         <section className="mx-auto w-full max-w-5xl px-4 py-16 text-center sm:py-24">
           <span className="mb-5 inline-block rounded-full border bg-muted/40 px-3 py-1 text-xs font-medium text-muted-foreground">
-            Field service management for contractors
+            For insulation, construction &amp; electrical contractors
           </span>
           <h1 className="mx-auto max-w-3xl text-balance text-4xl font-bold tracking-tight sm:text-5xl">
             Run your contracting business from your <span className="text-primary">pocket</span>

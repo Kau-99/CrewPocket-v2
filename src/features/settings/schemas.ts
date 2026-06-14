@@ -1,8 +1,13 @@
 import { z } from "zod";
 
+/** Nicho do contratante — adapta partes do app (ferramentas, sugestões). */
+export const tradeSchema = z.enum(["insulation", "construction", "electrical"]);
+export type Trade = z.infer<typeof tradeSchema>;
+
 /** SPEC §4.7 — doc único `settings/{uid}`. */
 export const settingsSchema = z.object({
   companyName: z.string().max(120),
+  trade: tradeSchema.default("insulation"),
   companyAddress: z.string().max(300),
   companyPhone: z.string().max(30),
   companyEmail: z.string().email().or(z.literal("")),
@@ -28,10 +33,11 @@ export const settingsSchema = z.object({
 
 export type Settings = z.infer<typeof settingsSchema>;
 
-/** Doc criado no primeiro login (onboarding pede só o nome da empresa). */
-export function buildDefaultSettings(companyName: string): Settings {
+/** Doc criado no primeiro login (onboarding pede nome da empresa + nicho). */
+export function buildDefaultSettings(companyName: string, trade: Trade): Settings {
   return settingsSchema.parse({
     companyName,
+    trade,
     companyAddress: "",
     companyPhone: "",
     companyEmail: "",

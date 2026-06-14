@@ -13,13 +13,16 @@ import {
   CommandList,
   CommandSeparator,
 } from "@/components/ui/command";
-import { NAV_ITEMS } from "@/components/shared/nav-items";
+import { navItemsFor } from "@/components/shared/nav-items";
+import { useSettings } from "@/features/settings/hooks/use-settings";
 import { useTranslation } from "@/hooks/use-translation";
 
 /** ⌘K: buscar/navegar/criar (SPEC §8, ADR-012). */
 export function CommandPalette() {
   const dict = useTranslation();
   const router = useRouter();
+  const { settings } = useSettings();
+  const navItems = navItemsFor(settings?.trade ?? "insulation");
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -66,7 +69,7 @@ export function CommandPalette() {
         </CommandGroup>
         <CommandSeparator />
         <CommandGroup heading={dict.palette.navigation}>
-          {NAV_ITEMS.map((item) => (
+          {navItems.map((item) => (
             <CommandItem
               key={item.href}
               onSelect={() => {

@@ -77,10 +77,22 @@ export const en = {
   },
   onboarding: {
     title: "Welcome to CrewPocket",
-    subtitle: "One quick thing before you start",
+    subtitle: "A couple of quick things before you start",
     companyName: "Company name",
-    companyNamePlaceholder: "Acme Insulation LLC",
+    companyNamePlaceholder: "Acme Contracting LLC",
     getStarted: "Get started",
+    tradeLabel: "What's your trade?",
+    tradeHint: "We tailor a few things in the app to your work.",
+    trades: {
+      insulation: "Insulation",
+      construction: "Construction",
+      electrical: "Electrical",
+    },
+    tradeDesc: {
+      insulation: "Spray foam, blow-in, batts",
+      construction: "Remodels, builds, repairs",
+      electrical: "Wiring, panels, service",
+    },
   },
   clients: {
     title: "Clients",
@@ -541,6 +553,7 @@ export const en = {
     minMargin: "Low margin alert (%)",
     businessSection: "Business details",
     businessHint: "Tax ID, license and website — printed on your documents.",
+    trade: "Trade",
     taxId: "Tax ID / EIN",
     licenseNumber: "License #",
     website: "Website",

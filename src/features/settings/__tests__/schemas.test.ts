@@ -4,10 +4,11 @@ import { buildDefaultSettings, settingsSchema } from "../schemas";
 
 describe("settingsSchema", () => {
   it("applies SPEC §4.7 defaults", () => {
-    const settings = buildDefaultSettings("Acme Insulation");
+    const settings = buildDefaultSettings("Acme Insulation", "insulation");
 
     expect(settings).toMatchObject({
       companyName: "Acme Insulation",
+      trade: "insulation",
       language: "en",
       theme: "dark",
       timezone: "America/Chicago",
@@ -36,13 +37,13 @@ describe("settingsSchema", () => {
     ["companyEmail inválido", { companyEmail: "not-an-email" }],
     ["logoUrl inválida", { logoUrl: "not-a-url" }],
   ])("rejects %s", (_label, override) => {
-    const base = buildDefaultSettings("Acme");
+    const base = buildDefaultSettings("Acme", "insulation");
     const result = settingsSchema.safeParse({ ...base, ...override });
     expect(result.success).toBe(false);
   });
 
   it("accepts empty companyEmail (or-literal vazio)", () => {
-    const base = buildDefaultSettings("Acme");
+    const base = buildDefaultSettings("Acme", "insulation");
     expect(settingsSchema.safeParse({ ...base, companyEmail: "" }).success).toBe(true);
   });
 });

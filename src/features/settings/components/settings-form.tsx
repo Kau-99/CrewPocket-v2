@@ -311,6 +311,25 @@ export function SettingsForm({ settings }: { settings: Settings }) {
 
       <Section title={dict.settings.businessSection}>
         <p className="text-xs text-muted-foreground">{dict.settings.businessHint}</p>
+        <Field label={dict.settings.trade}>
+          <Select
+            value={settings.trade}
+            onValueChange={(value) => {
+              applyImmediate({ trade: value as Settings["trade"] });
+            }}
+          >
+            <SelectTrigger className="sm:max-w-xs" aria-label={dict.settings.trade}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {(["insulation", "construction", "electrical"] as const).map((t) => (
+                <SelectItem key={t} value={t}>
+                  {dict.onboarding.trades[t]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </Field>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <Field id="set-taxid" label={dict.settings.taxId}>
             <Input

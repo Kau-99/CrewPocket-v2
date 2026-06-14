@@ -5,7 +5,7 @@ import { COLLECTIONS } from "@/lib/firestore/collections";
 import { commitWrite } from "@/lib/firestore/write";
 import { logger } from "@/lib/logger";
 
-import { buildDefaultSettings, settingsSchema, type Settings } from "./schemas";
+import { buildDefaultSettings, settingsSchema, type Settings, type Trade } from "./schemas";
 
 function settingsRef(uid: string) {
   return doc(db, COLLECTIONS.settings, uid);
@@ -50,8 +50,12 @@ export function subscribeToSettings(
 }
 
 /** Escrita sempre via schema.parse antes do setDoc (SPEC §3.2.5). */
-export async function createSettings(uid: string, companyName: string): Promise<void> {
-  const settings = buildDefaultSettings(companyName.trim());
+export async function createSettings(
+  uid: string,
+  companyName: string,
+  trade: Trade,
+): Promise<void> {
+  const settings = buildDefaultSettings(companyName.trim(), trade);
   await setDoc(settingsRef(uid), settingsSchema.parse(settings));
 }
 

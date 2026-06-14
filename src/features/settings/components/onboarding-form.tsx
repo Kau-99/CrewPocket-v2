@@ -1,46 +1,44 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
+import { HardHat, Snowflake, Zap, type LucideIcon } from "lucide-react";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/use-auth";
 import { useTranslation } from "@/hooks/use-translation";
+import { cn } from "@/lib/utils";
 
 import { createSettings } from "../api";
+import type { Trade } from "../schemas";
 
-/** Onboarding mínimo do primeiro login: só o nome da empresa (SPEC §11 Fase 1). */
+const TRADES: { value: Trade; icon: LucideIcon }[] = [
+  { value: "insulation", icon: Snowflake },
+  { value: "construction", icon: HardHat },
+  { value: "electrical", icon: Zap },
+];
+
+/** Onboarding do primeiro login: nome da empresa + nicho (SPEC §11 Fase 1). */
 export function OnboardingForm() {
   const dict = useTranslation();
+  const o = dict.onboarding;
   const { user } = useAuth();
+  const [companyName, setCompanyName] = useState("");
+  const [trade, setTrade] = useState<Trade>("insulation");
   const [submitting, setSubmitting] = useState(false);
 
-  const schema = z.object({
-    companyName: z.string().trim().min(1, dict.forms.companyNameRequired).max(120),
-  });
-  const form = useForm<z.infer<typeof schema>>({
-    resolver: zodResolver(schema),
-    defaultValues: { companyName: "" },
-  });
-
-  async function onSubmit(values: z.infer<typeof schema>) {
+  async function handleSubmit() {
     if (!user) return;
+    if (!companyName.trim()) {
+      toast.error(dict.forms.companyNameRequired);
+      return;
+    }
     setSubmitting(true);
     try {
-      await createSettings(user.uid, values.companyName);
+      await createSettings(user.uid, companyName, trade);
       // o onSnapshot de useSettings troca a tela sozinho
     } catch {
       toast.error(dict.errors.unknown);
@@ -49,36 +47,73 @@ export function OnboardingForm() {
   }
 
   return (
-    <main className="flex min-h-dvh items-center justify-center p-6">
-      <Card className="w-full max-w-sm">
+    <main className="flex min-h-dvh items-center justify-center p-4">
+      <Card className="w-full max-w-lg">
         <CardHeader>
-          <CardTitle>{dict.onboarding.title}</CardTitle>
-          <CardDescription>{dict.onboarding.subtitle}</CardDescription>
+          <CardTitle>{o.title}</CardTitle>
+          <CardDescription>{o.subtitle}</CardDescription>
         </CardHeader>
         <CardContent>
-          <Form {...form}>
-            <form
-              className="space-y-4"
-              onSubmit={(event) => void form.handleSubmit(onSubmit)(event)}
-            >
-              <FormField
-                control={form.control}
-                name="companyName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{dict.onboarding.companyName}</FormLabel>
-                    <FormControl>
-                      <Input placeholder={dict.onboarding.companyNamePlaceholder} {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+          <form
+            className="space-y-6"
+            onSubmit={(event) => {
+              event.preventDefault();
+              void handleSubmit();
+            }}
+          >
+            <div className="space-y-1.5">
+              <Label htmlFor="ob-company">{o.companyName}</Label>
+              <Input
+                id="ob-company"
+                autoFocus
+                placeholder={o.companyNamePlaceholder}
+                value={companyName}
+                onChange={(event) => {
+                  setCompanyName(event.target.value);
+                }}
               />
-              <Button type="submit" className="w-full" disabled={submitting}>
-                {submitting ? dict.common.loading : dict.onboarding.getStarted}
-              </Button>
-            </form>
-          </Form>
+            </div>
+
+            <fieldset className="space-y-2">
+              <legend className="text-sm font-medium">{o.tradeLabel}</legend>
+              <p className="text-xs text-muted-foreground">{o.tradeHint}</p>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                {TRADES.map(({ value, icon: Icon }) => {
+                  const selected = trade === value;
+                  return (
+                    <button
+                      key={value}
+                      type="button"
+                      aria-pressed={selected}
+                      onClick={() => {
+                        setTrade(value);
+                      }}
+                      className={cn(
+                        "flex flex-col items-center gap-2 rounded-lg border p-4 text-center transition-colors",
+                        selected
+                          ? "border-primary bg-primary/5 ring-1 ring-primary"
+                          : "hover:bg-accent",
+                      )}
+                    >
+                      <Icon
+                        className={cn(
+                          "size-6",
+                          selected ? "text-primary" : "text-muted-foreground",
+                        )}
+                        aria-hidden="true"
+                      />
+                      <span className="text-sm font-medium">{o.trades[value]}</span>
+                      <span className="text-xs text-muted-foreground">{o.tradeDesc[value]}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </fieldset>
+
+            <Button type="submit" className="w-full" disabled={submitting}>
+              {submitting ? dict.common.loading : o.getStarted}
+            </Button>
+          </form>
         </CardContent>
       </Card>
     </main>

@@ -4,8 +4,9 @@ import { MoreHorizontal } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { isActivePath, MORE_ITEMS, TAB_ITEMS } from "@/components/shared/nav-items";
+import { isActivePath, moreItemsFor, TAB_ITEMS } from "@/components/shared/nav-items";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { useSettings } from "@/features/settings/hooks/use-settings";
 import { useTranslation } from "@/hooks/use-translation";
 import { useUiStore } from "@/hooks/use-ui-store";
 import { cn } from "@/lib/utils";
@@ -22,6 +23,8 @@ export function BottomTabs() {
   const pathname = usePathname();
   const open = useUiStore((store) => store.mobileNavOpen);
   const setOpen = useUiStore((store) => store.setMobileNavOpen);
+  const { settings } = useSettings();
+  const moreItems = moreItemsFor(settings?.trade ?? "insulation");
 
   return (
     <nav
@@ -53,7 +56,7 @@ export function BottomTabs() {
             <SheetTitle>{dict.nav.more}</SheetTitle>
           </SheetHeader>
           <div className="grid grid-cols-3 gap-2 py-4">
-            {MORE_ITEMS.map((item) => {
+            {moreItems.map((item) => {
               const active = isActivePath(pathname, item.href);
               return (
                 <Link

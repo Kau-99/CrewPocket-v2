@@ -75,10 +75,22 @@ export const es: Dictionary = {
   },
   onboarding: {
     title: "Bienvenido a CrewPocket",
-    subtitle: "Una cosa rápida antes de empezar",
+    subtitle: "Un par de cosas rápidas antes de empezar",
     companyName: "Nombre de la empresa",
-    companyNamePlaceholder: "Acme Insulation LLC",
+    companyNamePlaceholder: "Acme Contracting LLC",
     getStarted: "Comenzar",
+    tradeLabel: "¿Cuál es tu rubro?",
+    tradeHint: "Adaptamos algunas cosas de la app a tu trabajo.",
+    trades: {
+      insulation: "Aislamiento",
+      construction: "Construcción",
+      electrical: "Electricidad",
+    },
+    tradeDesc: {
+      insulation: "Espuma, soplado, paneles",
+      construction: "Remodelaciones, obra, reparaciones",
+      electrical: "Cableado, tableros, servicio",
+    },
   },
   clients: {
     title: "Clientes",
@@ -540,6 +552,7 @@ export const es: Dictionary = {
     minMargin: "Alerta de margen bajo (%)",
     businessSection: "Datos del negocio",
     businessHint: "Identificación fiscal, licencia y sitio web — impresos en tus documentos.",
+    trade: "Rubro",
     taxId: "Identificación fiscal",
     licenseNumber: "N.º de licencia",
     website: "Sitio web",
