@@ -13,6 +13,7 @@ const EXPORTED: string[] = [
   COLLECTIONS.timeLogs,
   COLLECTIONS.mileageLogs,
   COLLECTIONS.inventoryItems,
+  COLLECTIONS.equipmentItems,
   COLLECTIONS.pricebookItems,
 ];
 

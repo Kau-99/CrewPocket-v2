@@ -177,6 +177,17 @@ service cloud.firestore {
         && d.minStock is number && d.minStock >= 0;
     }
 
+    function validEquipmentItem() {
+      let d = request.resource.data;
+      return d.name is string && d.name.size() >= 1 && d.name.size() <= 120
+        && d.category is string && d.category.size() <= 60
+        && d.status in ['available', 'in_use', 'maintenance', 'retired']
+        && d.serialNumber is string && d.serialNumber.size() <= 80
+        && d.location is string && d.location.size() <= 120
+        && d.purchaseCostCents is int && d.purchaseCostCents >= 0
+        && d.notes is string && d.notes.size() <= 2000;
+    }
+
     function validPricebookItem() {
       let d = request.resource.data;
       return d.name is string && d.name.size() >= 1 && d.name.size() <= 120
@@ -283,6 +294,12 @@ service cloud.firestore {
       allow read, delete: if ownsExisting();
       allow create: if ownsIncoming() && validBase() && validInventoryItem();
       allow update: if ownsExisting() && immutableBase() && validBase() && validInventoryItem();
+    }
+
+    match /equipmentItems/{docId} {
+      allow read, delete: if ownsExisting();
+      allow create: if ownsIncoming() && validBase() && validEquipmentItem();
+      allow update: if ownsExisting() && immutableBase() && validBase() && validEquipmentItem();
     }
 
     match /pricebookItems/{docId} {

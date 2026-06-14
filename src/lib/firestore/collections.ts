@@ -17,6 +17,7 @@ export const COLLECTIONS = {
   timeLogs: "timeLogs",
   mileageLogs: "mileageLogs",
   inventoryItems: "inventoryItems",
+  equipmentItems: "equipmentItems",
   pricebookItems: "pricebookItems",
 } as const;
 

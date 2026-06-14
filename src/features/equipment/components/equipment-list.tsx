@@ -1,6 +1,6 @@
 "use client";
 
-import { MoreHorizontal, Package, Plus, TriangleAlert } from "lucide-react";
+import { MoreHorizontal, Plus, Wrench } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -15,78 +15,84 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Textarea } from "@/components/ui/textarea";
 import { useTranslation } from "@/hooks/use-translation";
-import { centsToDollarsString, dollarsToCents } from "@/lib/utils";
+import { cn, centsToDollarsString, dollarsToCents, formatCents } from "@/lib/utils";
 
-import { useInventory, useInventoryMutations } from "../hooks/use-inventory";
-import type { InventoryItem } from "../schemas";
-import { isLowStock } from "../utils";
+import { useEquipment, useEquipmentMutations } from "../hooks/use-equipment";
+import { equipmentStatusSchema, type EquipmentItem, type EquipmentStatus } from "../schemas";
 
-interface DraftItem {
+interface Draft {
   name: string;
   category: string;
-  quantity: string;
-  unit: string;
-  unitCost: string;
-  supplier: string;
-  minStock: string;
+  status: EquipmentStatus;
+  serialNumber: string;
+  location: string;
+  purchaseCost: string;
+  notes: string;
 }
 
-function toDraft(item: InventoryItem | undefined): DraftItem {
+function toDraft(item: EquipmentItem | undefined): Draft {
   return {
     name: item?.name ?? "",
     category: item?.category ?? "",
-    quantity: item ? String(item.quantity) : "0",
-    unit: item?.unit ?? "",
-    unitCost: item ? centsToDollarsString(item.unitCostCents) : "0.00",
-    supplier: item?.supplier ?? "",
-    minStock: item ? String(item.minStock) : "0",
+    status: item?.status ?? "available",
+    serialNumber: item?.serialNumber ?? "",
+    location: item?.location ?? "",
+    purchaseCost: item ? centsToDollarsString(item.purchaseCostCents) : "0.00",
+    notes: item?.notes ?? "",
   };
 }
 
-export function InventoryList() {
+const STATUS_STYLES: Record<EquipmentStatus, string> = {
+  available: "bg-green-500/15 text-green-400",
+  in_use: "bg-blue-500/15 text-blue-400",
+  maintenance: "bg-amber-500/15 text-amber-400",
+  retired: "bg-muted text-muted-foreground",
+};
+
+export function EquipmentList() {
   const dict = useTranslation();
-  const fields = dict.inventory.fields;
-  const { data: items, isLoading } = useInventory();
+  const t = dict.equipment;
+  const fields = t.fields;
+  const { data: items, isLoading } = useEquipment();
   const [formOpen, setFormOpen] = useState(false);
-  const [editing, setEditing] = useState<InventoryItem | undefined>(undefined);
-  const [draft, setDraft] = useState<DraftItem>(toDraft(undefined));
-  const { create, update, remove, undoRemove } = useInventoryMutations({
+  const [editing, setEditing] = useState<EquipmentItem | undefined>(undefined);
+  const [draft, setDraft] = useState<Draft>(toDraft(undefined));
+  const { create, update, remove, undoRemove } = useEquipmentMutations({
     onDone: () => {
       setFormOpen(false);
     },
   });
 
-  function openForm(item: InventoryItem | undefined) {
+  function openForm(item: EquipmentItem | undefined) {
     setEditing(item);
     setDraft(toDraft(item));
     setFormOpen(true);
   }
 
   function handleSave() {
-    const quantity = Number(draft.quantity);
-    const minStock = Number(draft.minStock);
-    const unitCostCents = dollarsToCents(draft.unitCost);
-    if (
-      !draft.name.trim() ||
-      !Number.isFinite(quantity) ||
-      quantity < 0 ||
-      !Number.isFinite(minStock) ||
-      minStock < 0 ||
-      unitCostCents === null
-    ) {
+    const purchaseCostCents = dollarsToCents(draft.purchaseCost);
+    if (!draft.name.trim() || purchaseCostCents === null) {
       toast.error(dict.errors.validation);
       return;
     }
     const values = {
       name: draft.name.trim(),
       category: draft.category,
-      quantity,
-      unit: draft.unit,
-      unitCostCents,
-      supplier: draft.supplier,
-      minStock,
+      status: draft.status,
+      serialNumber: draft.serialNumber,
+      location: draft.location,
+      purchaseCostCents,
+      notes: draft.notes,
     };
     const mutation = editing
       ? update.mutateAsync({ current: editing, values })
@@ -94,10 +100,10 @@ export function InventoryList() {
     mutation.catch(() => toast.error(dict.errors.unknown));
   }
 
-  function handleDelete(item: InventoryItem) {
+  function handleDelete(item: EquipmentItem) {
     remove.mutate(item, {
       onSuccess: () => {
-        toast(dict.inventory.deletedToast, {
+        toast(t.deletedToast, {
           duration: 5000,
           action: {
             label: dict.common.undo,
@@ -122,7 +128,7 @@ export function InventoryList() {
           }}
         >
           <Plus className="mr-1 size-4" aria-hidden="true" />
-          {dict.inventory.new}
+          {t.new}
         </Button>
       </div>
 
@@ -134,15 +140,15 @@ export function InventoryList() {
         </div>
       ) : !items || items.length === 0 ? (
         <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed p-10 text-center">
-          <Package className="size-10 text-muted-foreground" aria-hidden="true" />
-          <p className="font-medium">{dict.inventory.empty}</p>
-          <p className="text-sm text-muted-foreground">{dict.inventory.emptyCta}</p>
+          <Wrench className="size-10 text-muted-foreground" aria-hidden="true" />
+          <p className="font-medium">{t.empty}</p>
+          <p className="text-sm text-muted-foreground">{t.emptyCta}</p>
           <Button
             onClick={() => {
               openForm(undefined);
             }}
           >
-            {dict.inventory.new}
+            {t.new}
           </Button>
         </div>
       ) : (
@@ -152,18 +158,17 @@ export function InventoryList() {
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium">{item.name}</p>
                 <p className="truncate text-xs text-muted-foreground">
-                  {[item.category, item.supplier].filter(Boolean).join(" · ")}
+                  {[item.category, item.serialNumber, item.location].filter(Boolean).join(" · ")}
                 </p>
               </div>
-              <span className="text-sm tabular-nums">
-                {item.quantity} {item.unit}
-              </span>
-              {isLowStock(item) && (
-                <Badge variant="secondary" className="border-0 bg-red-500/15 text-red-400">
-                  <TriangleAlert className="mr-1 size-3" aria-hidden="true" />
-                  {dict.inventory.lowStock}
-                </Badge>
+              {item.purchaseCostCents > 0 && (
+                <span className="hidden text-sm tabular-nums text-muted-foreground sm:inline">
+                  {formatCents(item.purchaseCostCents)}
+                </span>
               )}
+              <Badge variant="secondary" className={cn("border-0", STATUS_STYLES[item.status])}>
+                {t.statuses[item.status]}
+              </Badge>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon" aria-label={dict.common.edit}>
@@ -194,15 +199,15 @@ export function InventoryList() {
       )}
 
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
-        <DialogContent>
+        <DialogContent className="max-h-[90dvh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editing ? dict.inventory.edit : dict.inventory.new}</DialogTitle>
+            <DialogTitle>{editing ? t.edit : t.new}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-1.5">
-              <Label htmlFor="inv-name">{fields.name}</Label>
+              <Label htmlFor="eq-name">{fields.name}</Label>
               <Input
-                id="inv-name"
+                id="eq-name"
                 value={draft.name}
                 onChange={(event) => {
                   setDraft({ ...draft, name: event.target.value });
@@ -211,9 +216,10 @@ export function InventoryList() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <Label htmlFor="inv-category">{fields.category}</Label>
+                <Label htmlFor="eq-category">{fields.category}</Label>
                 <Input
-                  id="inv-category"
+                  id="eq-category"
+                  placeholder={fields.categoryPlaceholder}
                   value={draft.category}
                   onChange={(event) => {
                     setDraft({ ...draft, category: event.target.value });
@@ -221,58 +227,68 @@ export function InventoryList() {
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="inv-supplier">{fields.supplier}</Label>
+                <Label>{fields.status}</Label>
+                <Select
+                  value={draft.status}
+                  onValueChange={(value) => {
+                    setDraft({ ...draft, status: value as EquipmentStatus });
+                  }}
+                >
+                  <SelectTrigger aria-label={fields.status}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {equipmentStatusSchema.options.map((status) => (
+                      <SelectItem key={status} value={status}>
+                        {t.statuses[status]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="eq-serial">{fields.serialNumber}</Label>
                 <Input
-                  id="inv-supplier"
-                  value={draft.supplier}
+                  id="eq-serial"
+                  value={draft.serialNumber}
                   onChange={(event) => {
-                    setDraft({ ...draft, supplier: event.target.value });
+                    setDraft({ ...draft, serialNumber: event.target.value });
                   }}
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="inv-quantity">{fields.quantity}</Label>
+                <Label htmlFor="eq-location">{fields.location}</Label>
                 <Input
-                  id="inv-quantity"
-                  inputMode="decimal"
-                  value={draft.quantity}
+                  id="eq-location"
+                  placeholder={fields.locationPlaceholder}
+                  value={draft.location}
                   onChange={(event) => {
-                    setDraft({ ...draft, quantity: event.target.value });
+                    setDraft({ ...draft, location: event.target.value });
                   }}
                 />
               </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="inv-unit">{fields.unit}</Label>
-                <Input
-                  id="inv-unit"
-                  value={draft.unit}
-                  onChange={(event) => {
-                    setDraft({ ...draft, unit: event.target.value });
-                  }}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="inv-cost">{fields.unitCost}</Label>
-                <Input
-                  id="inv-cost"
-                  inputMode="decimal"
-                  value={draft.unitCost}
-                  onChange={(event) => {
-                    setDraft({ ...draft, unitCost: event.target.value });
-                  }}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="inv-min">{fields.minStock}</Label>
-                <Input
-                  id="inv-min"
-                  inputMode="decimal"
-                  value={draft.minStock}
-                  onChange={(event) => {
-                    setDraft({ ...draft, minStock: event.target.value });
-                  }}
-                />
-              </div>
+            </div>
+            <div className="space-y-1.5 sm:max-w-[12rem]">
+              <Label htmlFor="eq-cost">{fields.purchaseCost}</Label>
+              <Input
+                id="eq-cost"
+                inputMode="decimal"
+                value={draft.purchaseCost}
+                onChange={(event) => {
+                  setDraft({ ...draft, purchaseCost: event.target.value });
+                }}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="eq-notes">{fields.notes}</Label>
+              <Textarea
+                id="eq-notes"
+                rows={2}
+                value={draft.notes}
+                onChange={(event) => {
+                  setDraft({ ...draft, notes: event.target.value });
+                }}
+              />
             </div>
             <div className="flex justify-end gap-2">
               <Button

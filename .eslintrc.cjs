@@ -12,6 +12,7 @@ const FEATURES = [
   "time-tracking",
   "mileage",
   "inventory",
+  "equipment",
   "pricebook",
   "settings",
   "billing",

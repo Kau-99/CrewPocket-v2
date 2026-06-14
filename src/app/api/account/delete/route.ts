@@ -11,11 +11,13 @@ const OWNED_COLLECTIONS = [
   "clients",
   "jobs",
   "estimates",
+  "estimateTemplates",
   "invoices",
   "crewMembers",
   "timeLogs",
   "mileageLogs",
   "inventoryItems",
+  "equipmentItems",
   "pricebookItems",
 ];
 

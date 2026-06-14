@@ -13,6 +13,7 @@ import { buildDefaultSettings } from "@/features/settings/schemas";
 import {
   makeClient,
   makeCrewMember,
+  makeEquipmentItem,
   makeEstimate,
   makeEstimateTemplate,
   makeInventoryItem,
@@ -59,6 +60,7 @@ const OWNED_COLLECTIONS = [
   ["timeLogs", makeTimeLog],
   ["mileageLogs", makeMileageLog],
   ["inventoryItems", makeInventoryItem],
+  ["equipmentItems", makeEquipmentItem],
   ["pricebookItems", makePricebookItem],
 ] as const;
 

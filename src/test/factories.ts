@@ -194,6 +194,19 @@ export function makeInventoryItem(ownerId?: string) {
   };
 }
 
+export function makeEquipmentItem(ownerId?: string) {
+  return {
+    ...makeBase(ownerId),
+    name: "Graco spray rig",
+    category: "Spray rig",
+    status: "available" as const,
+    serialNumber: "SN-12345",
+    location: "Truck 2",
+    purchaseCostCents: 12_000_00,
+    notes: "",
+  };
+}
+
 export function makePricebookItem(ownerId?: string) {
   return {
     ...makeBase(ownerId),
