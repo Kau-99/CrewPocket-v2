@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
@@ -53,8 +53,15 @@ export function ClientFormDialog({ open, onOpenChange, client }: ClientFormDialo
     defaultValues: EMPTY,
   });
 
+  // inicializa uma vez por abertura: snapshot chegando não descarta a edição
+  const initialized = useRef(false);
   useEffect(() => {
-    if (open) form.reset(client ? clientFormSchema.parse(client) : EMPTY);
+    if (open && !initialized.current) {
+      form.reset(client ? clientFormSchema.parse(client) : EMPTY);
+      initialized.current = true;
+    } else if (!open) {
+      initialized.current = false;
+    }
   }, [open, client, form]);
 
   function onSubmit(values: ClientFormValues) {

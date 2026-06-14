@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -80,8 +80,15 @@ export function CrewFormDialog({ open, onOpenChange, member }: CrewFormDialogPro
     defaultValues: toFormValues(undefined),
   });
 
+  // inicializa uma vez por abertura: snapshot chegando não descarta a edição
+  const initialized = useRef(false);
   useEffect(() => {
-    if (open) form.reset(toFormValues(member));
+    if (open && !initialized.current) {
+      form.reset(toFormValues(member));
+      initialized.current = true;
+    } else if (!open) {
+      initialized.current = false;
+    }
   }, [open, member, form]);
 
   function onSubmit(raw: FormValues) {

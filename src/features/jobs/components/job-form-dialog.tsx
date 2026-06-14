@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus, X } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -150,12 +150,19 @@ export function JobFormDialog({
     defaultValues: toFormValues(undefined),
   });
 
+  // Inicializa UMA vez por abertura: um snapshot do servidor chegando enquanto
+  // o usuário edita NÃO pode resetar o form e descartar o que ele digitou.
+  const initialized = useRef(false);
   useEffect(() => {
-    if (!open) return;
-    form.reset(toFormValues(job));
-    setCrewIds(job?.crewIds ?? []);
-    setChecklist(job?.checklist ?? []);
-    setNewTask("");
+    if (open && !initialized.current) {
+      form.reset(toFormValues(job));
+      setCrewIds(job?.crewIds ?? []);
+      setChecklist(job?.checklist ?? []);
+      setNewTask("");
+      initialized.current = true;
+    } else if (!open) {
+      initialized.current = false;
+    }
   }, [open, job, form]);
 
   function toggleCrew(id: string) {

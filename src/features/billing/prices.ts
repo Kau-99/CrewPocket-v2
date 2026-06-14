@@ -9,8 +9,3 @@ export const PLAN_PRICE_USD: Record<Plan, Record<Interval, number>> = {
   solo: { monthly: 20, annual: 200 },
   pro: { monthly: 27, annual: 270 },
 };
-
-/** "$20" — sem casas decimais (valores redondos). */
-export function formatPlanPrice(plan: Plan, interval: Interval): string {
-  return `$${PLAN_PRICE_USD[plan][interval]}`;
-}

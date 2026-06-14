@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -84,8 +84,15 @@ export function MileageFormDialog({ open, onOpenChange, log, jobOptions }: Milea
     defaultValues: toFormValues(undefined),
   });
 
+  // inicializa uma vez por abertura: snapshot chegando não descarta a edição
+  const initialized = useRef(false);
   useEffect(() => {
-    if (open) form.reset(toFormValues(log));
+    if (open && !initialized.current) {
+      form.reset(toFormValues(log));
+      initialized.current = true;
+    } else if (!open) {
+      initialized.current = false;
+    }
   }, [open, log, form]);
 
   function onSubmit(raw: FormValues) {
