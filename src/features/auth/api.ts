@@ -2,7 +2,6 @@ import {
   GoogleAuthProvider,
   createUserWithEmailAndPassword,
   sendEmailVerification,
-  sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signInWithPopup,
   signOut,
@@ -10,6 +9,7 @@ import {
 } from "firebase/auth";
 
 import { auth } from "@/lib/firebase/client";
+import { requestPasswordResetEmail } from "@/lib/auth/reset";
 
 /** SPEC §6.5: popup, nunca redirect (quebra em Safari/ITP). */
 export function signInWithGoogle(): Promise<UserCredential> {
@@ -29,7 +29,7 @@ export async function signUpWithEmail(email: string, password: string): Promise<
 }
 
 export function requestPasswordReset(email: string): Promise<void> {
-  return sendPasswordResetEmail(auth, email);
+  return requestPasswordResetEmail(email);
 }
 
 export function signOutUser(): Promise<void> {

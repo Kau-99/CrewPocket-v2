@@ -17,6 +17,10 @@ export const env = createEnv({
     STRIPE_PRICE_SOLO_ANNUAL: z.string().min(1),
     STRIPE_PRICE_PRO_MONTHLY: z.string().min(1),
     STRIPE_PRICE_PRO_ANNUAL: z.string().min(1),
+    // Resend (e-mails transacionais confiáveis). Opcionais: sem eles o reset
+    // de senha cai no envio padrão do Firebase (fallback).
+    RESEND_API_KEY: z.string().optional(),
+    RESEND_FROM: z.string().optional(),
   },
   client: {
     NEXT_PUBLIC_FIREBASE_API_KEY: z.string().min(1),
@@ -40,6 +44,8 @@ export const env = createEnv({
     STRIPE_PRICE_SOLO_ANNUAL: process.env.STRIPE_PRICE_SOLO_ANNUAL,
     STRIPE_PRICE_PRO_MONTHLY: process.env.STRIPE_PRICE_PRO_MONTHLY,
     STRIPE_PRICE_PRO_ANNUAL: process.env.STRIPE_PRICE_PRO_ANNUAL,
+    RESEND_API_KEY: process.env.RESEND_API_KEY,
+    RESEND_FROM: process.env.RESEND_FROM,
     NEXT_PUBLIC_FIREBASE_API_KEY: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
     NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
     NEXT_PUBLIC_FIREBASE_PROJECT_ID: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,

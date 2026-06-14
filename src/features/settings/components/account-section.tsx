@@ -1,6 +1,6 @@
 "use client";
 
-import { sendPasswordResetEmail, signOut } from "firebase/auth";
+import { signOut } from "firebase/auth";
 import { KeyRound, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -19,6 +19,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/use-auth";
 import { useTranslation } from "@/hooks/use-translation";
+import { requestPasswordResetEmail } from "@/lib/auth/reset";
 import { auth } from "@/lib/firebase/client";
 
 /** Conta (SPEC §6.5/§8): reset de senha + deletar conta com confirmação digitada. */
@@ -31,7 +32,7 @@ export function AccountSection() {
 
   function handlePasswordReset() {
     if (!user?.email) return;
-    sendPasswordResetEmail(auth, user.email)
+    requestPasswordResetEmail(user.email)
       .then(() => toast.success(dict.settings.passwordEmailSent))
       .catch(() => toast.error(dict.errors.unknown));
   }
